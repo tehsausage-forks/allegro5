@@ -3,6 +3,7 @@
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_image.h>
 #include <allegro5/allegro_font.h>
+#include <allegro5/allegro_ttf.h>
 
 #include "common.c"
 
@@ -32,6 +33,7 @@ int main(int argc, char **argv)
    }
 
    al_init_font_addon();
+   al_init_ttf_addon();
    init_platform_specific();
 
    display = al_create_display(640, 480);
@@ -43,9 +45,14 @@ int main(int argc, char **argv)
       abort_example("Error installing keyboard.\n");
    }
 
-   font = al_load_font("data/fixed_font.tga", 0, 0);
+   font = al_load_font("data/DejaVuSans.ttf", 16, 0);
    if (!font) {
-      abort_example("Error loading data/fixed_font.tga\n");
+      log_printf("Error loading data/DejaVuSans.ttf\n");
+
+      font = al_load_font("data/fixed_font.tga", 0, 0);
+      if (!font) {
+         abort_example("Error loading data/fixed_font.tga\n");
+      }
    }
 
    timer = al_create_timer(INTERVAL);
