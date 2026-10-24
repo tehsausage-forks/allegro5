@@ -196,20 +196,26 @@ static ALLEGRO_MOUSE_DRIVER *xglx_get_mouse_driver(void)
    return _al_xwin_mouse_driver();
 }
 
+#ifndef ALLEGRO_CFG_NO_JOYSTICK
 static ALLEGRO_JOYSTICK_DRIVER *xglx_get_joystick_driver(void)
 {
    return _al_joystick_driver_list[0].driver;
 }
+#endif
 
+#ifndef ALLEGRO_CFG_NO_HAPTIC
 static ALLEGRO_HAPTIC_DRIVER *xglx_get_haptic_driver(void)
 {
    return _al_haptic_driver_list[0].driver;
 }
+#endif
 
+#ifndef ALLEGRO_CFG_NO_TOUCH
 static ALLEGRO_TOUCH_INPUT_DRIVER *xglx_get_touch_driver(void)
 {
    return _al_touch_input_driver_list[0].driver;
 }
+#endif
 
 static int xglx_get_num_video_adapters(void)
 {
@@ -324,9 +330,15 @@ ALLEGRO_SYSTEM_INTERFACE *_al_system_xglx_driver(void)
    xglx_vt->get_display_driver = xglx_get_display_driver;
    xglx_vt->get_keyboard_driver = xglx_get_keyboard_driver;
    xglx_vt->get_mouse_driver = xglx_get_mouse_driver;
+#ifndef ALLEGRO_CFG_NO_JOYSTICK
    xglx_vt->get_joystick_driver = xglx_get_joystick_driver;
+#endif
+#ifndef ALLEGRO_CFG_NO_HAPTIC
    xglx_vt->get_haptic_driver = xglx_get_haptic_driver;
+#endif
+#ifndef ALLEGRO_CFG_NO_TOUCH
    xglx_vt->get_touch_input_driver = xglx_get_touch_driver;
+#endif
    xglx_vt->get_num_display_modes = xglx_get_num_display_modes;
    xglx_vt->get_display_mode = xglx_get_display_mode;
    xglx_vt->shutdown_system = xglx_shutdown_system;

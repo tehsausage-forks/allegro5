@@ -11,7 +11,9 @@
 #include "allegro5/internal/aintern_xkeyboard.h"
 #include "allegro5/internal/aintern_xmouse.h"
 #include "allegro5/internal/aintern_xsystem.h"
+#ifndef ALLEGRO_CFG_NO_TOUCH
 #include "allegro5/internal/aintern_xtouch.h"
+#endif
 #include "allegro5/internal/aintern_xdnd.h"
 
 #ifdef ALLEGRO_RASPBERRYPI
@@ -177,7 +179,9 @@ static void process_x11_event(ALLEGRO_SYSTEM_XGLX *s, XEvent event)
         break;
 
       default:
+#ifndef ALLEGRO_CFG_NO_TOUCH
          _al_x_handle_touch_event(s, d, &event);
+#endif
          _al_xglx_handle_mmon_event(s, d, &event);
          break;
 #endif

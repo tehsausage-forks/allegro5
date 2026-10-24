@@ -9,7 +9,9 @@
 #include "allegro5/internal/aintern_xfullscreen.h"
 #include "allegro5/internal/aintern_xglx_config.h"
 #include "allegro5/internal/aintern_xsystem.h"
+#ifndef ALLEGRO_CFG_NO_TOUCH
 #include "allegro5/internal/aintern_xtouch.h"
+#endif
 #include "allegro5/internal/aintern_xwindow.h"
 #include "allegro5/internal/aintern_xdnd.h"
 #include "allegro5/platform/aintxglx.h"

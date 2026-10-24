@@ -187,8 +187,10 @@ HWND _al_win_create_window(ALLEGRO_DISPLAY *display, int width, int height, int 
       NULL,NULL,window_class.hInstance,0);
    al_free(window_title);
 
+#ifndef ALLEGRO_CFG_NO_TOUCH
    if (_al_win_register_touch_window)
       _al_win_register_touch_window(my_window, 0);
+#endif
 
    ZeroMemory(&notification_filter, sizeof(notification_filter));
    notification_filter.dbcc_size = sizeof(DEV_BROADCAST_DEVICEINTERFACE);
@@ -261,8 +263,10 @@ HWND _al_win_create_faux_fullscreen_window(LPCTSTR devname, ALLEGRO_DISPLAY *dis
       NULL,NULL,window_class.hInstance,0);
    al_free(window_title);
 
+#ifndef ALLEGRO_CFG_NO_TOUCH
    if (_al_win_register_touch_window)
       _al_win_register_touch_window(my_window, 0);
+#endif
 
    temp = GetWindowLong(my_window, GWL_STYLE);
    temp &= ~WS_CAPTION;
@@ -298,9 +302,13 @@ HWND _al_win_create_faux_fullscreen_window(LPCTSTR devname, ALLEGRO_DISPLAY *dis
  */
 void _al_win_grab_input(ALLEGRO_DISPLAY_WIN *win_disp)
 {
+#ifndef ALLEGRO_CFG_NO_JOYSTICK
    _al_win_wnd_schedule_proc(win_disp->window,
                              _al_win_joystick_dinput_grab,
                              win_disp);
+#else
+   (void)win_disp;
+#endif
 }
 
 /* Generate a resize event if the size has changed. We cannot asynchronously
@@ -398,10 +406,14 @@ static void break_window_message_pump(ALLEGRO_DISPLAY_WIN *win_display, HWND hWn
  */
 static bool accept_mouse_event(void)
 {
+#ifndef ALLEGRO_CFG_NO_TOUCH
    if (!al_is_touch_input_installed())
       return true;
 
    return !((GetMessageExtraInfo() & _AL_MOUSEEVENTF_FROMTOUCH) == _AL_MOUSEEVENTF_FROMTOUCH);
+#else
+   return true;
+#endif
 }
 
 /* We want to rate-limit the ALLEGRO_EVENT_DISPLAY_RESIZE events while
@@ -454,8 +466,10 @@ static LRESULT CALLBACK window_callback(HWND hWnd, UINT message,
    if (message == _al_win_msg_suicide && wParam) {
       win_display = (ALLEGRO_DISPLAY_WIN*)wParam;
       break_window_message_pump(win_display, hWnd);
+#ifndef ALLEGRO_CFG_NO_TOUCH
       if (_al_win_unregister_touch_window)
          _al_win_unregister_touch_window(hWnd);
+#endif
       al_lock_mutex(resize_event_thread_mutex);
       _al_vector_find_and_delete(&resizing_displays, &win_display);
       al_unlock_mutex(resize_event_thread_mutex);
@@ -478,8 +492,10 @@ static LRESULT CALLBACK window_callback(HWND hWnd, UINT message,
 
    if (message == _al_win_msg_suicide) {
       break_window_message_pump(win_display, hWnd);
+#ifndef ALLEGRO_CFG_NO_TOUCH
       if (_al_win_unregister_touch_window)
          _al_win_unregister_touch_window(hWnd);
+#endif
       al_lock_mutex(resize_event_thread_mutex);
       _al_vector_find_and_delete(&resizing_displays, &win_display);
       al_unlock_mutex(resize_event_thread_mutex);
@@ -666,6 +682,7 @@ static LRESULT CALLBACK window_callback(HWND hWnd, UINT message,
          }
          break;
       }
+#ifndef ALLEGRO_CFG_NO_TOUCH
       case _AL_WM_TOUCH: {
          if (_al_win_get_touch_input_info && _al_win_close_touch_input_handle) {
             int number_of_touches = LOWORD(wParam);
@@ -709,6 +726,7 @@ static LRESULT CALLBACK window_callback(HWND hWnd, UINT message,
          }
          break;
       }
+#endif
       case WM_CAPTURECHANGED: {
          if (al_is_mouse_installed()) {
             int i;
@@ -1016,7 +1034,9 @@ static LRESULT CALLBACK window_callback(HWND hWnd, UINT message,
         }
         break;
       case WM_DEVICECHANGE:
+#ifndef ALLEGRO_CFG_NO_JOYSTICK
         _al_win_joystick_dinput_trigger_enumeration();
+#endif
         break;
    }
 

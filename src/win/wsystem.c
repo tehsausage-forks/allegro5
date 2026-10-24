@@ -351,6 +351,7 @@ static ALLEGRO_KEYBOARD_DRIVER *win_get_keyboard_driver(void)
 }
 
 
+#ifndef ALLEGRO_CFG_NO_JOYSTICK
 /* Checks whether the configured joystick driver is of the given name.
  * Also returns false if the configuration entry was not set.
  */
@@ -409,7 +410,9 @@ static ALLEGRO_JOYSTICK_DRIVER *win_get_joystick_driver(void)
       return &_al_joydrv_directx;
 #endif
 }
+#endif
 
+#ifndef ALLEGRO_CFG_NO_HAPTIC
 /* By default the combined haptic driver is used unless directinput or
  * xinput exclusive is set in the configuration.*/
 static ALLEGRO_HAPTIC_DRIVER *win_get_haptic_driver(void)
@@ -436,6 +439,7 @@ static ALLEGRO_HAPTIC_DRIVER *win_get_haptic_driver(void)
       return &_al_hapdrv_directx;
 #endif
 }
+#endif
 
 
 static int win_get_num_display_modes(void)
@@ -663,10 +667,12 @@ static ALLEGRO_MOUSE_DRIVER *win_get_mouse_driver(void)
    return _al_mouse_driver_list[0].driver;
 }
 
+#ifndef ALLEGRO_CFG_NO_TOUCH
 static ALLEGRO_TOUCH_INPUT_DRIVER *win_get_touch_input_driver(void)
 {
    return _al_touch_input_driver_list[0].driver;
 }
+#endif
 
 /* _al_win_get_path:
  *  Returns full path to various system and user diretories
@@ -931,9 +937,15 @@ static ALLEGRO_SYSTEM_INTERFACE *_al_system_win_driver(void)
    vt->get_display_driver = win_get_display_driver;
    vt->get_keyboard_driver = win_get_keyboard_driver;
    vt->get_mouse_driver = win_get_mouse_driver;
+#ifndef ALLEGRO_CFG_NO_TOUCH
    vt->get_touch_input_driver = win_get_touch_input_driver;
+#endif
+#ifndef ALLEGRO_CFG_NO_HAPTIC
    vt->get_haptic_driver = win_get_haptic_driver;
+#endif
+#ifndef ALLEGRO_CFG_NO_JOYSTICK
    vt->get_joystick_driver = win_get_joystick_driver;
+#endif
    vt->get_num_display_modes = win_get_num_display_modes;
    vt->get_display_mode = win_get_display_mode;
    vt->shutdown_system = win_shutdown;
