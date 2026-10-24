@@ -263,7 +263,7 @@ static bool xdpy_set_icon_inner(Display *x11display, Window window,
    if (!data)
       return false;
 
-   lr = al_lock_bitmap(bitmap, ALLEGRO_PIXEL_FORMAT_ANY_WITH_ALPHA,
+   lr = al_lock_bitmap(bitmap, ALLEGRO_PIXEL_FORMAT_ANY,
       ALLEGRO_LOCK_READONLY);
    if (lr) {
       int x, y;

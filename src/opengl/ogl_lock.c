@@ -611,15 +611,27 @@ static void ogl_unlock_region_nonbb_fbo_writeonly(ALLEGRO_BITMAP *bitmap,
    unsigned char * const tmpbuf = al_malloc(dst_pitch * bitmap->lock_h);
    GLenum e;
 
-   _al_convert_bitmap_data(
-      ogl_bitmap->lock_buffer,
-      bitmap->locked_region.format,
-      -bitmap->locked_region.pitch,
-      tmpbuf,
-      orig_format,
-      dst_pitch,
-      0, 0, 0, 0,
-      bitmap->lock_w, bitmap->lock_h);
+   if (bitmap->locked_region.format == orig_format) {
+      _al_copy_bitmap_data(
+         ogl_bitmap->lock_buffer,
+         -bitmap->locked_region.pitch,
+         tmpbuf,
+         dst_pitch,
+         0, 0, 0, 0,
+         bitmap->lock_w, bitmap->lock_h,
+         orig_format);
+   }
+   else {
+      _al_convert_bitmap_data(
+         ogl_bitmap->lock_buffer,
+         bitmap->locked_region.format,
+         -bitmap->locked_region.pitch,
+         tmpbuf,
+         orig_format,
+         dst_pitch,
+         0, 0, 0, 0,
+         bitmap->lock_w, bitmap->lock_h);
+   }
 
    glTexSubImage2D(GL_TEXTURE_2D, 0,
       bitmap->lock_x, gl_y,

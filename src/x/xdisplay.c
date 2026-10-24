@@ -566,6 +566,7 @@ static bool xdpy_create_display_hook_default(ALLEGRO_DISPLAY *display,
       ALLEGRO_STATE state;
       al_store_state(&state, ALLEGRO_STATE_NEW_BITMAP_PARAMETERS);
       al_set_new_bitmap_flags(ALLEGRO_MEMORY_BITMAP);
+      al_set_new_bitmap_format(ALLEGRO_PIXEL_FORMAT_RGBA_8888);
       ALLEGRO_BITMAP *bitmap = al_create_bitmap(ICON_WIDTH, ICON_HEIGHT);
       al_restore_state(&state);
 

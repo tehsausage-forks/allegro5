@@ -163,10 +163,6 @@ AL_FUNC(ALLEGRO_DISPLAY*, _al_get_bitmap_display, (ALLEGRO_BITMAP *bitmap));
 AL_FUNC(void, _al_get_bitmap_wrap, (ALLEGRO_BITMAP *bitmap,
    ALLEGRO_BITMAP_WRAP *wrap_u, ALLEGRO_BITMAP_WRAP *wrap_v));
 
-extern void (*_al_convert_funcs[ALLEGRO_NUM_PIXEL_FORMATS]
-   [ALLEGRO_NUM_PIXEL_FORMATS])(const void *, int, void *, int,
-   int, int, int, int, int, int);
-
 /* Bitmap conversion */
 void _al_convert_bitmap_data(
         const void *src, int src_format, int src_pitch,

@@ -19,6 +19,7 @@
  */
 
 
+#include <stdio.h>
 #include <string.h>
 #include "allegro5/allegro.h"
 #include "allegro5/internal/aintern.h"
@@ -707,10 +708,19 @@ static bool transfer_bitmap_data(ALLEGRO_BITMAP *src, ALLEGRO_BITMAP *dst)
       }
    }
 
-   _al_convert_bitmap_data(
-      src_region->data, src_region->format, src_region->pitch,
-      dst_region->data, dst_region->format, dst_region->pitch,
-      0, 0, 0, 0, copy_w, copy_h);
+   if (src_region->format == dst_region->format) {
+      _al_copy_bitmap_data(
+         src_region->data, src_region->pitch,
+         dst_region->data, dst_region->pitch,
+         0, 0, 0, 0, copy_w, copy_h,
+         src_region->format);
+   }
+   else {
+      _al_convert_bitmap_data(
+         src_region->data, src_region->format, src_region->pitch,
+         dst_region->data, dst_region->format, dst_region->pitch,
+         0, 0, 0, 0, copy_w, copy_h);
+   }
 
    al_unlock_bitmap(src);
    al_unlock_bitmap(dst);
@@ -767,24 +777,19 @@ void _al_convert_bitmap_data(
    void *dst, int dst_format, int dst_pitch,
    int sx, int sy, int dx, int dy, int width, int height)
 {
-   ASSERT(src);
-   ASSERT(dst);
-   ASSERT(_al_pixel_format_is_real(dst_format));
+   (void)src;
+   (void)src_pitch;
+   (void)dst;
+   (void)dst_pitch;
+   (void)sx;
+   (void)sy;
+   (void)dx;
+   (void)dy;
 
-   /* Use memcpy if no conversion is needed. */
-   if (src_format == dst_format) {
-      _al_copy_bitmap_data(src, src_pitch, dst, dst_pitch, sx, sy,
-         dx, dy, width, height, src_format);
-      return;
-   }
-
-   /* Video-only formats don't have conversion functions, so they should have
-    * been taken care of before reaching this location. */
-   ASSERT(!_al_pixel_format_is_video_only(src_format));
-   ASSERT(!_al_pixel_format_is_video_only(dst_format));
-
-   (_al_convert_funcs[src_format][dst_format])(src, src_pitch,
-      dst, dst_pitch, sx, sy, dx, dy, width, height);
+   fprintf(stderr, "allegro: attempted conversion %s -> %s (%dx%d)\n",
+      _al_pixel_format_name((ALLEGRO_PIXEL_FORMAT)src_format),
+      _al_pixel_format_name((ALLEGRO_PIXEL_FORMAT)dst_format),
+      width, height);
 }
 
 

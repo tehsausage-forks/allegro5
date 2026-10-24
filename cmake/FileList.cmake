@@ -9,7 +9,6 @@ set(ALLEGRO_SRC_FILES
     src/blenders.c
     src/clipboard.c
     src/config.c
-    src/convert.c
     src/cpu.c
     src/debug.c
     src/display.c
