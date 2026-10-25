@@ -31,7 +31,9 @@
 #include "allegro5/internal/aintern_system.h"
 #include "allegro5/internal/aintern_thread.h"
 #include "allegro5/internal/aintern_tri_soft.h" // For ALLEGRO_VERTEX
+#ifndef ALLEGRO_CFG_NO_SOFTWARE_RENDERING
 #include "allegro5/internal/aintern_prim_soft.h"
+#endif
 #include "allegro5/internal/aintern_vector.h"
 #include "allegro5/internal/aintern_wclipboard.h"
 #include "allegro5/platform/aintwin.h"
@@ -3204,10 +3206,14 @@ static int draw_prim_common(ALLEGRO_BITMAP* target, ALLEGRO_BITMAP* texture,
    }
 
    if ((use_fixed_pipeline && decl) || (decl && decl->d3d_decl == 0)) {
+#ifndef ALLEGRO_CFG_NO_SOFTWARE_RENDERING
       if(!indices)
          return _al_draw_prim_soft(texture, vtx, decl, 0, num_vtx, type);
       else
          return _al_draw_prim_indexed_soft(texture, vtx, decl, indices, num_vtx, type);
+#else
+      return 0;
+#endif
    }
 
    int num_idx = num_vtx;

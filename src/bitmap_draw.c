@@ -17,7 +17,9 @@
 #include "allegro5/allegro.h"
 #include "allegro5/internal/aintern_bitmap.h"
 #include "allegro5/internal/aintern_display.h"
+#ifndef ALLEGRO_CFG_NO_SOFTWARE_RENDERING
 #include "allegro5/internal/aintern_memblit.h"
+#endif
 #include "allegro5/internal/aintern_pixels.h"
 
 
@@ -36,7 +38,9 @@ static void _bitmap_drawer(ALLEGRO_BITMAP *bitmap, ALLEGRO_COLOR tint,
    /* If destination is memory, do a memory blit */
    if (al_get_bitmap_flags(dest) & ALLEGRO_MEMORY_BITMAP ||
        _al_pixel_format_is_compressed(al_get_bitmap_format(dest))) {
+#ifndef ALLEGRO_CFG_NO_SOFTWARE_RENDERING
       _al_draw_bitmap_region_memory(bitmap, tint, sx, sy, sw, sh, 0, 0, flags);
+#endif
    }
    else {
       /* if source is memory or incompatible */
@@ -47,9 +51,11 @@ static void _bitmap_drawer(ALLEGRO_BITMAP *bitmap, ALLEGRO_COLOR tint,
             display->vt->draw_memory_bitmap_region(display, bitmap,
                sx, sy, sw, sh, flags);
          }
+#ifndef ALLEGRO_CFG_NO_SOFTWARE_RENDERING
          else {
             _al_draw_bitmap_region_memory(bitmap, tint, sx, sy, sw, sh, 0, 0, flags);
          }
+#endif
       }
       else {
          /* Compatible display bitmap, use full acceleration */

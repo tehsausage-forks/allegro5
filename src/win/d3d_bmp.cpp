@@ -23,7 +23,9 @@
 #include "allegro5/internal/aintern.h"
 #include "allegro5/internal/aintern_bitmap.h"
 #include "allegro5/internal/aintern_display.h"
+#ifndef ALLEGRO_CFG_NO_SOFTWARE_RENDERING
 #include "allegro5/internal/aintern_memblit.h"
+#endif
 #include "allegro5/internal/aintern_pixels.h"
 #include "allegro5/internal/aintern_system.h"
 #include "allegro5/internal/aintern_tri_soft.h" // For ALLEGRO_VERTEX
@@ -738,9 +740,11 @@ static void d3d_draw_bitmap_region(
    ASSERT(src->parent == NULL);
 
    if (!_al_d3d_render_to_texture_supported()) {
+#ifndef ALLEGRO_CFG_NO_SOFTWARE_RENDERING
       _al_draw_bitmap_region_memory(src, tint,
          (int)sx, (int)sy, (int)sw, (int)sh, 0, 0,
          (int)flags);
+#endif
       return;
    }
 

@@ -22,7 +22,9 @@
 #include "allegro5/allegro_opengl.h"
 #include "allegro5/internal/aintern.h"
 #include "allegro5/internal/aintern_display.h"
+#ifndef ALLEGRO_CFG_NO_SOFTWARE_RENDERING
 #include "allegro5/internal/aintern_memblit.h"
+#endif
 #include "allegro5/internal/aintern_opengl.h"
 #include "allegro5/internal/aintern_pixels.h"
 #include "allegro5/internal/aintern_system.h"
@@ -375,8 +377,10 @@ static void ogl_draw_bitmap_region(ALLEGRO_BITMAP *bitmap,
       return;
    }
 
+#ifndef ALLEGRO_CFG_NO_SOFTWARE_RENDERING
    /* If all else fails, fall back to software implementation. */
    _al_draw_bitmap_region_memory(bitmap, tint, sx, sy, sw, sh, 0, 0, flags);
+#endif
 }
 
 

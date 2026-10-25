@@ -15,11 +15,16 @@
 
 #include "allegro5/allegro.h"
 #include "allegro5/allegro_opengl.h"
+#include "allegro5/internal/aintern_bitmap.h"
 #include "allegro5/internal/aintern_display.h"
+#ifndef ALLEGRO_CFG_NO_SOFTWARE_RENDERING
 #include "allegro5/internal/aintern_memdraw.h"
+#endif
 #include "allegro5/internal/aintern_opengl.h"
 #include "allegro5/internal/aintern_primitives.h"
+#ifndef ALLEGRO_CFG_NO_SOFTWARE_RENDERING
 #include "allegro5/internal/aintern_prim_soft.h"
+#endif
 
 #ifdef ALLEGRO_ANDROID
 #include "allegro5/internal/aintern_android.h"
@@ -431,12 +436,16 @@ static int draw_prim_common(ALLEGRO_BITMAP* target, ALLEGRO_BITMAP* texture,
 
    if ((!extra->is_backbuffer && disp->ogl_extras->opengl_target !=
       opengl_target) || al_is_bitmap_locked(target)) {
+#ifndef ALLEGRO_CFG_NO_SOFTWARE_RENDERING
       if (vertex_buffer) {
          return _al_draw_buffer_common_soft(vertex_buffer, texture, NULL, start, end, type);
       }
       else {
          return _al_draw_prim_soft(texture, vtx, decl, start, end, type);
       }
+#else
+      return 0;
+#endif
    }
 
    if (vertex_buffer) {
@@ -525,12 +534,16 @@ static int draw_prim_indexed_common(ALLEGRO_BITMAP* target, ALLEGRO_BITMAP* text
 
    if ((!extra->is_backbuffer && disp->ogl_extras->opengl_target !=
       opengl_target) || al_is_bitmap_locked(target)) {
+#ifndef ALLEGRO_CFG_NO_SOFTWARE_RENDERING
       if (use_buffers) {
          return _al_draw_buffer_common_soft(vertex_buffer, texture, index_buffer, start, end, type);
       }
       else {
          return _al_draw_prim_indexed_soft(texture, vtx, decl, indices, num_vtx, type);
       }
+#else
+      return 0;
+#endif
    }
 
 #if defined ALLEGRO_IPHONE
@@ -939,7 +952,9 @@ static void ogl_clear(ALLEGRO_DISPLAY *d, ALLEGRO_COLOR *color)
          ogl_disp->ogl_extras->opengl_target != target)
       || target->locked)
    {
+#ifndef ALLEGRO_CFG_NO_SOFTWARE_RENDERING
       _al_clear_bitmap_by_locking(target, color);
+#endif
       return;
    }
 
@@ -968,7 +983,9 @@ static void ogl_draw_pixel(ALLEGRO_DISPLAY *d, float x, float y,
    if ((!ogl_target->is_backbuffer &&
       d->ogl_extras->opengl_target != target) ||
       target->locked || !_al_opengl_set_blender(d))  {
+#ifndef ALLEGRO_CFG_NO_SOFTWARE_RENDERING
       _al_draw_pixel_memory(target, x, y, color);
+#endif
       return;
    }
 
