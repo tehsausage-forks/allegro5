@@ -45,6 +45,12 @@ ALLEGRO_DEBUG_CHANNEL("image")
 #define WININFOHEADERSIZEV4   108
 #define WININFOHEADERSIZEV5   124
 
+static uint32_t bmp_abgr8888(unsigned int r, unsigned int g,
+   unsigned int b, unsigned int a)
+{
+   return (a << 24) | (b << 16) | (g << 8) | r;
+}
+
 typedef struct BMPFILEHEADER
 {
    unsigned short bfType;
@@ -420,7 +426,7 @@ static void read_16_rgb_555_line(ALLEGRO_FILE *f, char *buf, char *data,
 
    for (i = 0; i < length; ++i) {
       uint16_t pixel = read_16le(buf + i*2);
-      data32[i] = ALLEGRO_CONVERT_RGB_555_TO_ABGR_8888_LE(pixel);
+      data32[i] = ALLEGRO_CONVERT_RGB_555_TO_ABGR_8888(pixel);
    }
 }
 
@@ -441,7 +447,7 @@ static void read_16_argb_1555_line(ALLEGRO_FILE *f, char *buf, char *data,
 
    for (i = 0; i < length; ++i) {
       uint16_t pixel = read_16le(buf + i*2);
-      data32[i] = ALLEGRO_CONVERT_ARGB_1555_TO_ABGR_8888_LE(pixel);
+      data32[i] = ALLEGRO_CONVERT_ARGB_1555_TO_ABGR_8888(pixel);
 
       if (premul && (pixel & 0x8000))
          data32[i] = 0;
@@ -467,7 +473,7 @@ static void read_16_rgb_565_line(ALLEGRO_FILE *f, char *buf, char *data,
 
    for (i = 0; i < length; i++) {
       uint16_t pixel = read_16le(buf + i*2);
-      data32[i] = ALLEGRO_CONVERT_RGB_565_TO_ABGR_8888_LE(pixel);
+      data32[i] = ALLEGRO_CONVERT_RGB_565_TO_ABGR_8888(pixel);
    }
 }
 
@@ -499,17 +505,17 @@ static void read_24_rgb_888_line(ALLEGRO_FILE *f, char *buf, char *data,
       uint32_t y = (b >> 16) | (c << 16);
       uint32_t z = (c >> 8);
 
-      data32[i]   = ALLEGRO_CONVERT_RGB_888_TO_ABGR_8888_LE(w);
-      data32[i+1] = ALLEGRO_CONVERT_RGB_888_TO_ABGR_8888_LE(x);
-      data32[i+2] = ALLEGRO_CONVERT_RGB_888_TO_ABGR_8888_LE(y);
-      data32[i+3] = ALLEGRO_CONVERT_RGB_888_TO_ABGR_8888_LE(z);
+      data32[i]   = ALLEGRO_CONVERT_RGB_888_TO_ABGR_8888(w);
+      data32[i+1] = ALLEGRO_CONVERT_RGB_888_TO_ABGR_8888(x);
+      data32[i+2] = ALLEGRO_CONVERT_RGB_888_TO_ABGR_8888(y);
+      data32[i+3] = ALLEGRO_CONVERT_RGB_888_TO_ABGR_8888(z);
    }
 
    bi *= 4;
 
    for (; i < length; i++, bi += 3) {
       uint32_t pixel = ucbuf[bi] | (ucbuf[bi+1] << 8) | (ucbuf[bi+2] << 16);
-      data32[i] = ALLEGRO_CONVERT_RGB_888_TO_ABGR_8888_LE(pixel);
+      data32[i] = ALLEGRO_CONVERT_RGB_888_TO_ABGR_8888(pixel);
    }
 }
 
@@ -532,7 +538,7 @@ static void read_32_xrgb_8888_line(ALLEGRO_FILE *f, char *buf, char *data,
 
    for (i = 0; i < length; i++) {
       uint32_t pixel = read_32le(buf + i*4);
-      data32[i] = ALLEGRO_CONVERT_XRGB_8888_TO_ABGR_8888_LE(pixel);
+      data32[i] = ALLEGRO_CONVERT_XRGB_8888_TO_ABGR_8888(pixel);
    }
 }
 
@@ -555,7 +561,7 @@ static void read_32_rgbx_8888_line(ALLEGRO_FILE *f, char *buf, char *data,
 
    for (i = 0; i < length; i++) {
       uint32_t pixel = read_32le(buf + i*4);
-      data32[i] = ALLEGRO_CONVERT_RGBX_8888_TO_ABGR_8888_LE(pixel);
+      data32[i] = ALLEGRO_CONVERT_RGBX_8888_TO_ABGR_8888(pixel);
    }
 }
 
@@ -577,12 +583,14 @@ static void read_32_argb_8888_line(ALLEGRO_FILE *f, char *buf, char *data,
    for (i = 0; i < length; i++) {
       uint32_t pixel = read_32le(buf + i*4);
       uint32_t a = (pixel & 0xFF000000U) >> 24;
-      data32[i] = ALLEGRO_CONVERT_ARGB_8888_TO_ABGR_8888_LE(pixel);
+      data32[i] = ALLEGRO_CONVERT_ARGB_8888_TO_ABGR_8888(pixel);
 
       if (premul && a != 255) {
-         data[i*4+1] = data[i*4+1] * a / 255;
-         data[i*4+2] = data[i*4+2] * a / 255;
-         data[i*4+3] = data[i*4+3] * a / 255;
+         uint32_t v = data32[i];
+         uint32_t r = (v & 0xFF) * a / 255;
+         uint32_t g = ((v >> 8) & 0xFF) * a / 255;
+         uint32_t b = ((v >> 16) & 0xFF) * a / 255;
+         data32[i] = bmp_abgr8888(r, g, b, a);
       }
    }
 }
@@ -605,12 +613,14 @@ static void read_32_rgba_8888_line(ALLEGRO_FILE *f, char *buf, char *data,
    for (i = 0; i < length; i++) {
       uint32_t pixel = read_32le(buf + i*4);
       uint32_t a = (pixel & 0x000000FFU);
-      data32[i] = ALLEGRO_CONVERT_RGBA_8888_TO_ABGR_8888_LE(pixel);
+      data32[i] = ALLEGRO_CONVERT_RGBA_8888_TO_ABGR_8888(pixel);
 
       if (premul && a != 255) {
-         data[i*4]   = data[i*4] * a / 255;
-         data[i*4+1] = data[i*4+1] * a / 255;
-         data[i*4+2] = data[i*4+2] * a / 255;
+         uint32_t v = data32[i];
+         uint32_t r = (v & 0xFF) * a / 255;
+         uint32_t g = ((v >> 8) & 0xFF) * a / 255;
+         uint32_t b = ((v >> 16) & 0xFF) * a / 255;
+         data32[i] = bmp_abgr8888(r, g, b, a);
       }
    }
 }
@@ -746,14 +756,13 @@ static bool read_RGB_paletted_image(ALLEGRO_FILE *f, int flags,
 
    for (i = 0; i < height; i++, line += dir) {
       char *data = (char *)lr->data + lr->pitch * line;
+      uint32_t *data32 = (uint32_t *)data;
       fn(f, linebuf, data, width, false);
 
       for (j = 0; j < width; ++j) {
          unsigned char idx = linebuf[j];
-         data[j*4]   = pal[idx].r;
-         data[j*4+1] = pal[idx].g;
-         data[j*4+2] = pal[idx].b;
-         data[j*4+3] = pal[idx].a;
+         data32[j] = bmp_abgr8888(pal[idx].r, pal[idx].g,
+            pal[idx].b, pal[idx].a);
       }
    }
 
@@ -860,6 +869,8 @@ static bool read_bitfields_image(ALLEGRO_FILE *f, int flags,
       bytes_read = al_fread(f, linebuf, linesize);
       memset(linebuf + bytes_read, 0, linesize - bytes_read);
 
+      uint32_t *data32 = (uint32_t *)data;
+
       for (k = 0; k < width; k++) {
          uint32_t pixel = read_32le(linebuf + k*bytes_per_pixel);
          uint32_t r, g, b, a = 255;
@@ -890,12 +901,7 @@ static bool read_bitfields_image(ALLEGRO_FILE *f, int flags,
             }
          }
 
-         data[0] = r;
-         data[1] = g;
-         data[2] = b;
-         data[3] = a;
-
-         data += 4;
+         *data32++ = bmp_abgr8888(r, g, b, a);
       }
    }
 
@@ -961,8 +967,9 @@ static bool read_RGB_image_32bit_alpha_hack(ALLEGRO_FILE *f, int flags,
       read_32_argb_8888_line(f, linebuf, (char *)data, width, false);
 
       /* Check the alpha values of every pixel in the row */
+      uint32_t *data32 = (uint32_t *)data;
       for (j = 0; j < width; j++) {
-         have_alpha |= ((data[j*4+3] & 0xFF) != 0);
+         have_alpha |= ((data32[j] >> 24) != 0);
       }
    }
 
@@ -971,10 +978,10 @@ static bool read_RGB_image_32bit_alpha_hack(ALLEGRO_FILE *f, int flags,
       line = startline;
 
       for (i = 0; i < height; i++, line += dir) {
-         unsigned char *data = (unsigned char *)lr->data + lr->pitch * line;
+         uint32_t *data32 = (uint32_t *)((unsigned char *)lr->data + lr->pitch * line);
 
          for (j = 0; j < width; j++) {
-            data[j*4+3] = 255;
+            data32[j] |= 0xFF000000;
          }
       }
    }
@@ -982,12 +989,15 @@ static bool read_RGB_image_32bit_alpha_hack(ALLEGRO_FILE *f, int flags,
       line = startline;
 
       for (i = 0; i < height; i++, line += dir) {
-         unsigned char *data = (unsigned char *)lr->data + lr->pitch * line;
+         uint32_t *data32 = (uint32_t *)((unsigned char *)lr->data + lr->pitch * line);
 
          for (j = 0; j < width; j++) {
-            data[j*4]   = data[j*4] * data[j*4+3] / 255;
-            data[j*4+1] = data[j*4+1] * data[j*4+3] / 255;
-            data[j*4+2] = data[j*4+2] * data[j*4+3] / 255;
+            uint32_t v = data32[j];
+            uint32_t a = (v >> 24) & 0xFF;
+            uint32_t r = (v & 0xFF) * a / 255;
+            uint32_t g = ((v >> 8) & 0xFF) * a / 255;
+            uint32_t b = ((v >> 16) & 0xFF) * a / 255;
+            data32[j] = bmp_abgr8888(r, g, b, a);
          }
       }
    }
@@ -1423,7 +1433,7 @@ ALLEGRO_BITMAP *_al_load_bmp_f(ALLEGRO_FILE *f, int flags)
          ALLEGRO_LOCK_WRITEONLY);
    }
    else {
-      lr = al_lock_bitmap(bmp, ALLEGRO_PIXEL_FORMAT_ABGR_8888_LE,
+      lr = al_lock_bitmap(bmp, ALLEGRO_PIXEL_FORMAT_ABGR_8888,
          ALLEGRO_LOCK_WRITEONLY);
    }
 
@@ -1556,21 +1566,17 @@ ALLEGRO_BITMAP *_al_load_bmp_f(ALLEGRO_FILE *f, int flags)
    if (infoheader.biCompression == BIT_RLE8
        || infoheader.biCompression == BIT_RLE4) {
       int x, y;
-      unsigned char *data;
 
       for (y = 0; y < abs((int)infoheader.biHeight); y++) {
-         data = (unsigned char *)lr->data + lr->pitch * y;
+         unsigned char *data8 = (unsigned char *)lr->data + lr->pitch * y;
+         uint32_t *data32 = (uint32_t *)data8;
          for (x = 0; x < (int)infoheader.biWidth; x++) {
             if (keep_index) {
-               data[0] = buf[y * infoheader.biWidth + x];
-               data++;
+               *data8++ = buf[y * infoheader.biWidth + x];
             }
             else {
-               data[0] = pal[buf[y * infoheader.biWidth + x]].r;
-               data[1] = pal[buf[y * infoheader.biWidth + x]].g;
-               data[2] = pal[buf[y * infoheader.biWidth + x]].b;
-               data[3] = 255;
-               data += 4;
+               PalEntry *p = &pal[buf[y * infoheader.biWidth + x]];
+               *data32++ = bmp_abgr8888(p->r, p->g, p->b, 255);
             }
          }
       }
@@ -1639,10 +1645,10 @@ bool _al_save_bmp_f(ALLEGRO_FILE *f, ALLEGRO_BITMAP *bmp)
    al_fwrite32le(f, 0);                   /* biClrUsed */
    al_fwrite32le(f, 0);                   /* biClrImportant */
 
-   /* Don't really need the alpha channel, just the _LE.
+   /* We only need the RGB channels.
     * Note that there exist 32-bit BMPs now so we could try to save those.
     */
-   lr = al_lock_bitmap(bmp, ALLEGRO_PIXEL_FORMAT_ABGR_8888_LE,
+   lr = al_lock_bitmap(bmp, ALLEGRO_PIXEL_FORMAT_ABGR_8888,
       ALLEGRO_LOCK_READONLY);
 
    /* image data */
@@ -1650,9 +1656,11 @@ bool _al_save_bmp_f(ALLEGRO_FILE *f, ALLEGRO_BITMAP *bmp)
       unsigned char *data = (unsigned char *)lr->data + i * lr->pitch;
 
       for (j = 0; j < w; j++) {
-         unsigned char r = data[0];
-         unsigned char g = data[1];
-         unsigned char b = data[2];
+         uint32_t pixel;
+         memcpy(&pixel, data, sizeof pixel);
+         unsigned char r = pixel & 0xFF;
+         unsigned char g = (pixel >> 8) & 0xFF;
+         unsigned char b = (pixel >> 16) & 0xFF;
          data += 4;
 
          al_fputc(f, b);

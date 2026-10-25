@@ -411,7 +411,7 @@ static ALLEGRO_BITMAP *create_builtin_font_sheet(void)
       al_set_target_bitmap(bmp);
       al_clear_to_color(al_map_rgba(255, 255, 0, 255));
       lr = al_lock_bitmap(bmp,
-         ALLEGRO_PIXEL_FORMAT_ABGR_8888_LE, ALLEGRO_LOCK_READWRITE);
+         ALLEGRO_PIXEL_FORMAT_ABGR_8888, ALLEGRO_LOCK_READWRITE);
 
       /* decode and render glyph pixels */
       for (i = 0; i < glyph_count; i++) {

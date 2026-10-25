@@ -23,6 +23,13 @@
 ALLEGRO_DEBUG_CHANNEL("font")
 
 
+static uint32_t ttf_abgr8888(unsigned int r, unsigned int g,
+   unsigned int b, unsigned int a)
+{
+   return (a << 24) | (b << 16) | (g << 8) | r;
+}
+
+
 /* Some low-end drivers enable automatic S3TC compression, which
  * requires glTexSubImage2D to only work on multiples of aligned
  * 4x4 pixel blocks with some buggy OpenGL drivers.
@@ -295,7 +302,7 @@ static unsigned char *alloc_glyph_region(ALLEGRO_TTF_FONT_DATA *data,
 
       data->page_lr = al_lock_bitmap_region(page,
          lock_rect.x, lock_rect.y, lock_rect.w, lock_rect.h,
-         ALLEGRO_PIXEL_FORMAT_ABGR_8888_LE, ALLEGRO_LOCK_WRITEONLY);
+         ALLEGRO_PIXEL_FORMAT_ABGR_8888, ALLEGRO_LOCK_WRITEONLY);
 
       if (!data->page_lr) {
          ALLEGRO_ERROR("Failed to lock page.\n");
@@ -309,13 +316,11 @@ static unsigned char *alloc_glyph_region(ALLEGRO_TTF_FONT_DATA *data,
           * FIXME We could clear just the border
           */
          for (i = 0; i < lock_rect.h; i++) {
-            ptr = (unsigned char *)(data->page_lr->data) + (i * data->page_lr->pitch);
+            uint32_t *p32 = (uint32_t *)((unsigned char *)data->page_lr->data
+               + i * data->page_lr->pitch);
             int j;
             for (j = 0; j < lock_rect.w; ++j) {
-               *ptr++ = 255;
-               *ptr++ = 255;
-               *ptr++ = 255;
-               *ptr++ = 0;
+               *p32++ = 0x00FFFFFF;
             }
          }
       }
@@ -348,16 +353,13 @@ static void copy_glyph_mono(ALLEGRO_TTF_FONT_DATA *font_data, FT_Face face,
 
    for (y = 0; y < (int)face->glyph->bitmap.rows; y++) {
       unsigned char const *ptr = face->glyph->bitmap.buffer + face->glyph->bitmap.pitch * y;
-      unsigned char *dptr = glyph_data + pitch * y;
+      uint32_t *dptr = (uint32_t *)(glyph_data + pitch * y);
       int bit = 0;
 
       if (face->glyph->bitmap.pixel_mode == FT_PIXEL_MODE_BGRA) {
          for (x = 0; x < (int)face->glyph->bitmap.width; x++) {
             unsigned char set = ((ptr[3] >> (7-bit)) & 1) ? 255 : 0;
-            *dptr++ = set;
-            *dptr++ = set;
-            *dptr++ = set;
-            *dptr++ = set;
+            *dptr++ = ttf_abgr8888(set, set, set, set);
             ptr += 4;
          }
       }
@@ -367,10 +369,7 @@ static void copy_glyph_mono(ALLEGRO_TTF_FONT_DATA *font_data, FT_Face face,
           */
          for (x = 0; x < (int)face->glyph->bitmap.width; x++) {
             unsigned char set = ((*ptr >> (7-bit)) & 1) ? 255 : 0;
-            *dptr++ = 255;
-            *dptr++ = 255;
-            *dptr++ = 255;
-            *dptr++ = set;
+            *dptr++ = ttf_abgr8888(255, 255, 255, set);
             bit = (bit + 1) & 7;
             if (bit == 0) {
                ptr++;
@@ -380,10 +379,7 @@ static void copy_glyph_mono(ALLEGRO_TTF_FONT_DATA *font_data, FT_Face face,
       else {
          for (x = 0; x < (int)face->glyph->bitmap.width; x++) {
             unsigned char set = ((*ptr >> (7-bit)) & 1) ? 255 : 0;
-            *dptr++ = set;
-            *dptr++ = set;
-            *dptr++ = set;
-            *dptr++ = set;
+            *dptr++ = ttf_abgr8888(set, set, set, set);
             bit = (bit + 1) & 7;
             if (bit == 0) {
                ptr++;
@@ -402,14 +398,11 @@ static void copy_glyph_color(ALLEGRO_TTF_FONT_DATA *font_data, FT_Face face,
 
    for (y = 0; y < (int)face->glyph->bitmap.rows; y++) {
       unsigned char const *ptr = face->glyph->bitmap.buffer + face->glyph->bitmap.pitch * y;
-      unsigned char *dptr = glyph_data + pitch * y;
+      uint32_t *dptr = (uint32_t *)(glyph_data + pitch * y);
 
       if (face->glyph->bitmap.pixel_mode == FT_PIXEL_MODE_BGRA) {
          for (x = 0; x < (int)face->glyph->bitmap.width; x++) {
-            *dptr++ = ptr[2];
-            *dptr++ = ptr[1];
-            *dptr++ = ptr[0];
-            *dptr++ = ptr[3];
+            *dptr++ = ttf_abgr8888(ptr[2], ptr[1], ptr[0], ptr[3]);
             ptr += 4;
          }
       }
@@ -419,20 +412,14 @@ static void copy_glyph_color(ALLEGRO_TTF_FONT_DATA *font_data, FT_Face face,
           */
          for (x = 0; x < (int)face->glyph->bitmap.width; x++) {
             unsigned char c = *ptr;
-            *dptr++ = 255;
-            *dptr++ = 255;
-            *dptr++ = 255;
-            *dptr++ = c;
+            *dptr++ = ttf_abgr8888(255, 255, 255, c);
             ptr++;
          }
       }
       else {
          for (x = 0; x < (int)face->glyph->bitmap.width; x++) {
             unsigned char c = *ptr;
-            *dptr++ = c;
-            *dptr++ = c;
-            *dptr++ = c;
-            *dptr++ = c;
+            *dptr++ = ttf_abgr8888(c, c, c, c);
             ptr++;
          }
       }
