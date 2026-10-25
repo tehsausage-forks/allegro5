@@ -22,7 +22,6 @@
 #endif
 
 #include "xicon.h"
-#include "icon.inc"
 
 ALLEGRO_DEBUG_CHANNEL("display")
 
@@ -566,23 +565,6 @@ static bool xdpy_create_display_hook_default(ALLEGRO_DISPLAY *display,
    if (_al_xwin_initial_icon) {
       ALLEGRO_BITMAP *bitmaps[] = {_al_xwin_initial_icon};
       _al_xwin_set_icons(display, 1, bitmaps);
-   } else {
-      ALLEGRO_STATE state;
-      al_store_state(&state, ALLEGRO_STATE_NEW_BITMAP_PARAMETERS);
-      al_set_new_bitmap_flags(ALLEGRO_MEMORY_BITMAP);
-      al_set_new_bitmap_format(ALLEGRO_PIXEL_FORMAT_RGBA_8888);
-      ALLEGRO_BITMAP *bitmap = al_create_bitmap(ICON_WIDTH, ICON_HEIGHT);
-      al_restore_state(&state);
-
-      ALLEGRO_LOCKED_REGION *lr = al_lock_bitmap(bitmap, ALLEGRO_PIXEL_FORMAT_RGBA_8888, ALLEGRO_LOCK_WRITEONLY);
-      for (int y = 0; y < ICON_HEIGHT; y++) {
-         memcpy((char*)lr->data + lr->pitch * y, &icon_data[ICON_WIDTH * y], ICON_WIDTH * 4);
-      }
-      al_unlock_bitmap(bitmap);
-
-      ALLEGRO_BITMAP *bitmaps[] = {bitmap};
-      _al_xwin_set_icons(display, 1, bitmaps);
-      al_destroy_bitmap(bitmap);
    }
 
    XLockDisplay(system->x11display);
