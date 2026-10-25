@@ -541,8 +541,8 @@ int _al_get_real_pixel_format(ALLEGRO_DISPLAY *display, int format)
 
 char const *_al_pixel_format_name(ALLEGRO_PIXEL_FORMAT format)
 {
-   if (format >= ALLEGRO_NUM_PIXEL_FORMATS) format = ALLEGRO_NUM_PIXEL_FORMATS;
-   return pixel_format_names[format];
+   (void)format;
+   return "";
 }
 
 

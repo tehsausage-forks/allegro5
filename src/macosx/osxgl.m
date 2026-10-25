@@ -946,11 +946,11 @@ static void osx_set_opengl_pixelformat_attributes(ALLEGRO_DISPLAY_OSX_WIN *dpy)
             if (extras->settings[i]) {
                *a = allegro_to_osx_settings[n][1]; a++;
                *a = extras->settings[i]; a++;
-               ALLEGRO_DEBUG("Passing pixel format attribute %s = %d\n", allegro_pixel_format_names[n], extras->settings[i]);
+               ALLEGRO_DEBUG("Passing pixel format attribute %s = %d\n", "", extras->settings[i]);
             }
          } else if (extras->settings[i]) {      /* Boolean, just turn this on */
             *a = allegro_to_osx_settings[n][1]; a++;
-            ALLEGRO_DEBUG("Passing pixel format attribute %s = %d\n", allegro_pixel_format_names[n], extras->settings[i]);
+            ALLEGRO_DEBUG("Passing pixel format attribute %s = %d\n", "", extras->settings[i]);
          }
       }
    }
@@ -1019,7 +1019,7 @@ static void osx_get_opengl_pixelformat_attributes(ALLEGRO_DISPLAY_OSX_WIN *dpy)
          value = 1;
 
       dpy->parent.extra_settings.settings[al_setting] = value;
-      ALLEGRO_DEBUG("Pixel format attribute %s set to %d\n", allegro_pixel_format_names[n], value);
+      ALLEGRO_DEBUG("Pixel format attribute %s set to %d\n", "", value);
    }
 #else
    /* CGLGetPixelFormat does not exist on Tiger, so we need to do something

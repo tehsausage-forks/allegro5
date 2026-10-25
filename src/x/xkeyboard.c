@@ -338,14 +338,7 @@ static int find_unknown_key_assignment(int i)
 
    for (j = 1; j < ALLEGRO_KEY_MAX; j++) {
       if (!used[j]) {
-         const char *str;
          keycode_to_scancode[i] = j;
-         str = XKeysymToString(keysyms[sym_per_key * (i - min_keycode)]);
-         if (str)
-            key_names[j] = str;
-         else {
-            key_names[j] = _al_keyboard_common_names[j];
-         }
          used[j] = 1;
          break;
       }
@@ -521,9 +514,8 @@ static int find_allegro_key(KeySym sym)
  */
 static const char *x_scancode_to_name(int scancode)
 {
-   ASSERT (scancode >= 0 && scancode < ALLEGRO_KEY_MAX);
-
-   return key_names[scancode];
+   (void)scancode;
+   return "";
 }
 
 
@@ -610,8 +602,6 @@ static bool _al_xwin_get_keyboard_mapping(void)
             is_double = true;
          }
          keycode_to_scancode[i] = allegro_key;
-         key_names[allegro_key] =
-            XKeysymToString(keysyms[sym_per_key * (i - min_keycode)]);
          used[allegro_key] = 1;
          ALLEGRO_DEBUG("%s%s assigned to %i.\n", str,
             is_double ? " *double*" : "", allegro_key);
@@ -727,8 +717,6 @@ static int x_keyboard_init(void)
       return 0;
 
    main_pid = getpid();
-
-   memcpy(key_names, _al_keyboard_common_names, sizeof key_names);
 
    _al_mutex_lock(&s->lock);
 

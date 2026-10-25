@@ -227,20 +227,10 @@ bool al_set_keyboard_leds(int leds)
  */
 const char *al_keycode_to_name(int keycode)
 {
-   const char *name = NULL;
-
    ASSERT(new_keyboard_driver);
    ASSERT((keycode >= 0) && (keycode < ALLEGRO_KEY_MAX));
 
-   if (new_keyboard_driver->keycode_to_name)
-      name = new_keyboard_driver->keycode_to_name(keycode);
-
-   if (!name)
-      name = _al_keyboard_common_names[keycode];
-
-   ASSERT(name);
-
-   return name;
+   return "";
 }
 
 
@@ -312,13 +302,7 @@ ALLEGRO_EVENT_SOURCE *al_get_keyboard_event_source(void)
 
 static int match_key_name(const char *s)
 {
-   int i;
-
-   /* Some key names are not intuitive, but this is all we've got. */
-   for (i = 1; i < ALLEGRO_KEY_MAX; i++) {
-      if (0 == _al_stricmp(s, _al_keyboard_common_names[i]))
-         return i;
-   }
+   (void)s;
    return 0;
 }
 
