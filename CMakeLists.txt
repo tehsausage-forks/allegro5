@@ -171,6 +171,7 @@ option(WANT_GLES3 "Use GLES3-only features in a GLES2+ build" off)
 #
 
 option(WANT_FONT "Enable bitmap font add-on" on)
+option(WANT_FONT_BMFONT "Enable BMFont XML loader in font addon" on)
 option(WANT_AUDIO "Enable allegro_audio engine" on)
 option(WANT_IMAGE "Enable image load/save addon" on)
 
@@ -180,6 +181,9 @@ if (NOT IPHONE)
     option(WANT_IMAGE_FREEIMAGE "Enable FreeImage support in image addon" on)
 endif (NOT IPHONE)
 option(WANT_IMAGE_WEBP "Enable WebP support in image addon" on)
+option(WANT_IMAGE_DDS "Enable DDS support in image addon" on)
+option(WANT_IMAGE_PCX "Enable PCX support in image addon" on)
+option(WANT_IMAGE_TGA "Enable TGA support in image addon" on)
 
 option(WANT_TTF "Enable TTF addon" on)
 option(WANT_COLOR "Enable color addon" on)

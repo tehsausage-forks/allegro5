@@ -20,11 +20,13 @@ bool al_init_image_addon(void)
 
    success = 0;
 
+#ifndef ALLEGRO_CFG_NO_IMAGE_PCX
    success |= al_register_bitmap_loader(".pcx", _al_load_pcx);
    success |= al_register_bitmap_saver(".pcx", _al_save_pcx);
    success |= al_register_bitmap_loader_f(".pcx", _al_load_pcx_f);
    success |= al_register_bitmap_saver_f(".pcx", _al_save_pcx_f);
    success |= al_register_bitmap_identifier(".pcx", _al_identify_pcx);
+#endif
 
    success |= al_register_bitmap_loader(".bmp", _al_load_bmp);
    success |= al_register_bitmap_saver(".bmp", _al_save_bmp);
@@ -32,15 +34,19 @@ bool al_init_image_addon(void)
    success |= al_register_bitmap_saver_f(".bmp", _al_save_bmp_f);
    success |= al_register_bitmap_identifier(".bmp", _al_identify_bmp);
 
+#ifndef ALLEGRO_CFG_NO_IMAGE_TGA
    success |= al_register_bitmap_loader(".tga", _al_load_tga);
    success |= al_register_bitmap_saver(".tga", _al_save_tga);
    success |= al_register_bitmap_loader_f(".tga", _al_load_tga_f);
    success |= al_register_bitmap_saver_f(".tga", _al_save_tga_f);
    success |= al_register_bitmap_identifier(".tga", _al_identify_tga);
+#endif
 
+#ifndef ALLEGRO_CFG_NO_IMAGE_DDS
    success |= al_register_bitmap_loader(".dds", _al_load_dds);
    success |= al_register_bitmap_loader_f(".dds", _al_load_dds_f);
    success |= al_register_bitmap_identifier(".dds", _al_identify_dds);
+#endif
 
    /* Even if we don't have libpng or libjpeg we most likely have a
     * native reader for those instead so always identify them.

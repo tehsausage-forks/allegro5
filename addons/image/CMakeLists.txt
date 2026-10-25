@@ -1,6 +1,25 @@
 option(WANT_NATIVE_IMAGE_LOADER "Enable the native platform image loader (if available)" on)
 
-set(IMAGE_SOURCES bmp.c iio.c pcx.c tga.c dds.c identify.c)
+set(IMAGE_SOURCES bmp.c iio.c identify.c)
+if(WANT_IMAGE_DDS)
+    list(APPEND IMAGE_SOURCES dds.c)
+endif()
+if(WANT_IMAGE_PCX)
+    list(APPEND IMAGE_SOURCES pcx.c)
+endif()
+if(WANT_IMAGE_TGA)
+    list(APPEND IMAGE_SOURCES tga.c)
+endif()
+set(IMAGE_EXTRA_FLAGS "-DALLEGRO_IIO_SRC")
+if(NOT WANT_IMAGE_DDS)
+    string(APPEND IMAGE_EXTRA_FLAGS " -DALLEGRO_CFG_NO_IMAGE_DDS")
+endif()
+if(NOT WANT_IMAGE_PCX)
+    string(APPEND IMAGE_EXTRA_FLAGS " -DALLEGRO_CFG_NO_IMAGE_PCX")
+endif()
+if(NOT WANT_IMAGE_TGA)
+    string(APPEND IMAGE_EXTRA_FLAGS " -DALLEGRO_CFG_NO_IMAGE_TGA")
+endif()
 set(IMAGE_INCLUDE_FILES allegro5/allegro_image.h)
 
 set_our_header_properties(${IMAGE_INCLUDE_FILES})
@@ -20,6 +39,10 @@ function(image_summary msg yesno)
     endif()
     set(IMAGE_CONFIGURATION_SUMMARY "${IMAGE_CONFIGURATION_SUMMARY}${msg}: ${yesno}\n" PARENT_SCOPE)
 endfunction()
+
+image_summary(" - DDS" WANT_IMAGE_DDS)
+image_summary(" - PCX" WANT_IMAGE_PCX)
+image_summary(" - TGA" WANT_IMAGE_TGA)
 
 # ALLEGRO_CFG_IIO_HAVE_* are the available libraries.
 # ALLEGRO_CFG_IIO_SUPPORT_* are the supported formats.
@@ -192,7 +215,7 @@ configure_file(
 add_our_addon_library(allegro_image
     AllegroImage-${ALLEGRO_SOVERSION}
     "${IMAGE_SOURCES};${IMAGE_INCLUDE_FILES}"
-    "-DALLEGRO_IIO_SRC"
+    "${IMAGE_EXTRA_FLAGS}"
     "${ALLEGRO_LINK_WITH};${IMAGE_LIBRARIES}"
     )
 
