@@ -37,25 +37,31 @@ struct ALLEGRO_MEMORY_INTERFACE {
 AL_FUNC(void, al_set_memory_interface, (ALLEGRO_MEMORY_INTERFACE *iface));
 
 
+#ifdef ALLEGRO_CFG_NO_MALLOC_CONTEXT
+#define ALLEGRO_MALLOC_CONTEXT_ARGS 0, NULL, NULL
+#else
+#define ALLEGRO_MALLOC_CONTEXT_ARGS __LINE__, __FILE__, __func__
+#endif
+
 /* Function: al_malloc
  */
 #define al_malloc(n) \
-   (al_malloc_with_context((n), __LINE__, __FILE__, __func__))
+   (al_malloc_with_context((n), ALLEGRO_MALLOC_CONTEXT_ARGS))
 
 /* Function: al_free
  */
 #define al_free(p) \
-   (al_free_with_context((p), __LINE__, __FILE__, __func__))
+   (al_free_with_context((p), ALLEGRO_MALLOC_CONTEXT_ARGS))
 
 /* Function: al_realloc
  */
 #define al_realloc(p, n) \
-   (al_realloc_with_context((p), (n), __LINE__, __FILE__, __func__))
+   (al_realloc_with_context((p), (n), ALLEGRO_MALLOC_CONTEXT_ARGS))
 
 /* Function: al_calloc
  */
 #define al_calloc(c, n) \
-   (al_calloc_with_context((c), (n), __LINE__, __FILE__, __func__))
+   (al_calloc_with_context((c), (n), ALLEGRO_MALLOC_CONTEXT_ARGS))
 
 
 AL_FUNC(void *, al_malloc_with_context, (size_t n,

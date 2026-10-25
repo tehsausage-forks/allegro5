@@ -220,9 +220,14 @@ option(WANT_DOCS_PDF_PAPER "Whether PDF output is destined for paper" off)
 option(STRICT_WARN "Halt at warnings" off)
 option(WANT_MUDFLAP "Enable gcc mudflap (requires gcc 4.0+)" off)
 option(WANT_RELEASE_LOGGING "Enable logging even in release mode" on)
+option(WANT_MALLOC_CONTEXT "Include file and line context in memory allocation calls" on)
 
 if(WANT_RELEASE_LOGGING)
     set(ALLEGRO_CFG_RELEASE_LOGGING 1)
+endif()
+
+if(NOT WANT_MALLOC_CONTEXT)
+    set(ALLEGRO_CFG_NO_MALLOC_CONTEXT 1)
 endif()
 
 #
