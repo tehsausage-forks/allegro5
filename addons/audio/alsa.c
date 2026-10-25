@@ -57,6 +57,9 @@ static _AL_LIST* output_device_list;
 
 static unsigned int get_period_size(void)
 {
+#ifdef ALLEGRO_CFG_NO_SYSTEM_CONFIG
+   return DEFAULT_PERIOD_SIZE;
+#else
    const char *val = al_get_config_value(al_get_system_config(),
       "alsa", "buffer_size");
    if (val && val[0] != '\0') {
@@ -67,10 +70,14 @@ static unsigned int get_period_size(void)
    }
 
    return DEFAULT_PERIOD_SIZE;
+#endif
 }
 
 static snd_pcm_uframes_t get_buffer_size(void)
 {
+#ifdef ALLEGRO_CFG_NO_SYSTEM_CONFIG
+   return DEFAULT_BUFFER_SIZE;
+#else
    const char *val = al_get_config_value(al_get_system_config(),
       "alsa", "buffer_size2");
    if (val && val[0] != '\0') {
@@ -81,6 +88,7 @@ static snd_pcm_uframes_t get_buffer_size(void)
    }
 
    return DEFAULT_BUFFER_SIZE;
+#endif
 }
 
 typedef struct ALSA_VOICE {
@@ -108,10 +116,12 @@ static int alsa_open(void)
 {
    alsa_device = default_device;
 
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
    const char *config_device;
    config_device = al_get_config_value(al_get_system_config(), "alsa", "device");
    if (config_device && config_device[0] != '\0')
       alsa_device = strdup(config_device);
+#endif
 
    ALSA_CHECK(snd_output_stdio_attach(&snd_output, stdout, 0));
 
@@ -804,11 +814,13 @@ static int alsa_allocate_recorder(ALLEGRO_AUDIO_RECORDER *r)
    unsigned int frequency = r->frequency;
    snd_pcm_format_t format;
    const char *device = default_device;
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
    const char *config_device;
    config_device =
       al_get_config_value(al_get_system_config(), "alsa", "capture_device");
    if (config_device && config_device[0] != '\0')
       device = config_device;
+#endif
 
    data = al_calloc(1, sizeof(*data));
 

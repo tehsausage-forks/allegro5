@@ -119,10 +119,12 @@ static ALLEGRO_SYSTEM* osx_sys_init(int flags)
 
    // `_al_osx_tell_dock` is better done after creating a display. Support old behavior for compatability.
    bool do_osx_tell_dock = true;
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
    const char* osx_tell_dock_outside_bundle_value =
       al_get_config_value(al_get_system_config(), "compatibility", "osx_tell_dock_outside_bundle");
    if (osx_tell_dock_outside_bundle_value && strcmp(osx_tell_dock_outside_bundle_value, "false") == 0)
       do_osx_tell_dock = false;
+#endif
 
    if (do_osx_tell_dock) {
        /* If in a bundle, the dock will recognise us automatically */

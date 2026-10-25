@@ -131,7 +131,11 @@ bool _al_save_webp_f(ALLEGRO_FILE *fp, ALLEGRO_BITMAP *bmp)
    uint8_t *output = NULL;
    size_t size;
 
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
    const char* level = al_get_config_value(al_get_system_config(), "image", "webp_quality_level");
+#else
+   const char* level = NULL;
+#endif
    if (!level || strcmp(level, "lossless") == 0) {
       size = WebPEncodeLosslessRGBA((const uint8_t*)lock->data,
          al_get_bitmap_width(bmp), al_get_bitmap_height(bmp),

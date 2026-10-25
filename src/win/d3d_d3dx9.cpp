@@ -94,12 +94,15 @@ extern "C"
 bool _al_load_d3dx9_module()
 {
    long version;
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
    char const *value;
+#endif
 
    if (_imp_d3dx9_module) {
       return true;
    }
 
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
    value = al_get_config_value(al_get_system_config(),
       "shader", "force_d3dx9_version");
    if (value) {
@@ -112,6 +115,7 @@ bool _al_load_d3dx9_module()
       else
          return _imp_load_d3dx9_module_version((int)version);
    }
+#endif
 
    // Iterate over all valid versions.
    for (version = D3DX9_MAX_VERSION; version >= D3DX9_MIN_VERSION; version--)

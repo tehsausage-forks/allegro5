@@ -240,12 +240,15 @@ static bool _imp_load_xinput_module_version(int version)
 static bool load_xinput_module(void)
 {
    long version;
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
    char const *value;
+#endif
 
    if (_imp_xinput_module) {
       return true;
    }
 
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
    value = al_get_config_value(al_get_system_config(),
       "joystick", "force_xinput_version");
    if (value) {
@@ -258,6 +261,7 @@ static bool load_xinput_module(void)
       else
          return _imp_load_xinput_module_version((int)version);
    }
+#endif
 
    // Iterate over all valid versions.
    for (version = XINPUT_MAX_VERSION; version >= XINPUT_MIN_VERSION; version--)

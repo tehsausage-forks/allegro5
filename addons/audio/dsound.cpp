@@ -67,6 +67,7 @@ static BOOL CALLBACK _ds_enum_callback(LPGUID lpGuid, LPCTSTR lpcstrDescription,
 
 static HWND get_window()
 {
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
    const char *val = al_get_config_value(al_get_system_config(),
       "directsound", "window");
    HWND ret;
@@ -79,11 +80,17 @@ static HWND get_window()
       ALLEGRO_INFO("Using desktop window: %p\n", ret);
    }
    return ret;
+#else
+   HWND ret = GetDesktopWindow();
+   ALLEGRO_INFO("Using desktop window: %p\n", ret);
+   return ret;
+#endif
 }
 
 static void dsound_set_buffer_size(int bits_per_sample)
 {
    int buffer_size_in_samples = 8192; // default
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
    const char *val = al_get_config_value(al_get_system_config(),
       "directsound", "buffer_size");
    if (val && val[0] != '\0') {
@@ -92,6 +99,7 @@ static void dsound_set_buffer_size(int bits_per_sample)
          n = MIN_BUFFER_SIZE;
       buffer_size_in_samples = n;
    }
+#endif
 
    buffer_size = buffer_size_in_samples * (bits_per_sample/8);
 }

@@ -830,10 +830,11 @@ static ALLEGRO_EXTRA_DISPLAY_SETTINGS** get_available_pixel_formats_old(int *cou
 static bool select_pixel_format(ALLEGRO_DISPLAY_WGL *d, HDC dc)
 {
    ALLEGRO_EXTRA_DISPLAY_SETTINGS **eds = NULL;
-   ALLEGRO_CONFIG *sys_cfg = al_get_system_config();
    int eds_count = 0;
    int i;
    bool force_old = false;
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
+   ALLEGRO_CONFIG *sys_cfg = al_get_system_config();
    const char *selection_mode;
 
    selection_mode = al_get_config_value(sys_cfg, "graphics",
@@ -846,6 +847,7 @@ static bool select_pixel_format(ALLEGRO_DISPLAY_WGL *d, HDC dc)
       else if (!_al_stricmp(selection_mode, "new"))
          force_old = false;
    }
+#endif
 
    if (!force_old)
       eds = get_available_pixel_formats_ext(&eds_count);

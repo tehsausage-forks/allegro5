@@ -133,6 +133,7 @@ static int xdpy_swap_control(ALLEGRO_DISPLAY *display, int vsync_setting)
 
 static bool should_bypass_compositor(int flags)
 {
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
    const char* value = al_get_config_value(al_get_system_config(), "x11", "bypass_compositor");
    if (value && strcmp(value, "always") == 0) {
       return true;
@@ -140,6 +141,7 @@ static bool should_bypass_compositor(int flags)
    if (value && strcmp(value, "never") == 0) {
       return false;
    }
+#endif
    // default to "fullscreen_only"
    return (flags & ALLEGRO_FULLSCREEN) || (flags & ALLEGRO_FULLSCREEN_WINDOW);
 }

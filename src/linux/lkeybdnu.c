@@ -368,6 +368,7 @@ static bool lkeybd_init_keyboard(void)
    the_keyboard.three_finger_flag = true;
    the_keyboard.key_led_flag = true;
 
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
    const char *value = al_get_config_value(al_get_system_config(),
          "keyboard", "enable_three_finger_exit");
    if (value) {
@@ -378,6 +379,7 @@ static bool lkeybd_init_keyboard(void)
    if (value) {
       the_keyboard.key_led_flag = !strncmp(value, "true", 4);
    }
+#endif
 
    ALLEGRO_DEBUG("Three finger flag enabled: %s\n",
       the_keyboard.three_finger_flag ? "true" : "false");

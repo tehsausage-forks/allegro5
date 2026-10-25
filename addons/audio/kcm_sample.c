@@ -67,6 +67,7 @@ static bool create_default_mixer(void)
    int mixer_frequency = 44100;
    int mixer_depth = ALLEGRO_AUDIO_DEPTH_FLOAT32;
 
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
    ALLEGRO_CONFIG *config = al_get_system_config();
    const char *p;
    p = al_get_config_value(config, "audio", "primary_voice_frequency");
@@ -85,6 +86,7 @@ static bool create_default_mixer(void)
    if (p && p[0] != '\0') {
       mixer_depth = string_to_depth(p);
    }
+#endif
 
    if (!allegro_voice) {
       allegro_voice = al_create_voice(voice_frequency, voice_depth,

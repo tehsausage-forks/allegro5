@@ -652,6 +652,7 @@ static bool _al_xwin_get_keyboard_mapping(void)
     * For normal use, a user never should have to touch [xkeymap] anymore
     * though, and proper written programs will not hardcode such mappings.
     */
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
    ALLEGRO_CONFIG *c = al_get_system_config();
 
    char const *key;
@@ -669,6 +670,7 @@ static bool _al_xwin_get_keyboard_mapping(void)
       }
       key = al_get_next_config_entry(&it);
    }
+#endif
 
    return true;
 }
@@ -935,11 +937,13 @@ static bool xkeybd_init_keyboard(void)
 
    the_keyboard.three_finger_flag = true;
 
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
    const char *value = al_get_config_value(al_get_system_config(),
          "keyboard", "enable_three_finger_exit");
    if (value) {
       the_keyboard.three_finger_flag = !strncmp(value, "true", 4);
    }
+#endif
    ALLEGRO_DEBUG("Three finger flag enabled: %s\n",
       the_keyboard.three_finger_flag ? "true" : "false");
 

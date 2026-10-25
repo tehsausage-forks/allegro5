@@ -634,6 +634,7 @@ ALLEGRO_MIXER *al_create_mixer(unsigned int freq,
 {
    ALLEGRO_MIXER *mixer;
    int default_mixer_quality = ALLEGRO_MIXER_QUALITY_LINEAR;
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
    const char *p;
 
    /* XXX this is in the wrong place */
@@ -653,6 +654,7 @@ ALLEGRO_MIXER *al_create_mixer(unsigned int freq,
          default_mixer_quality = ALLEGRO_MIXER_QUALITY_CUBIC;
       }
    }
+#endif
 
    if (!freq) {
       _al_set_error(ALLEGRO_INVALID_PARAM,

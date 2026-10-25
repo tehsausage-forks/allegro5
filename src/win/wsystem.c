@@ -252,14 +252,17 @@ static ALLEGRO_DISPLAY_INTERFACE *win_get_display_driver(void)
 {
    const int flags = al_get_new_display_flags();
    ALLEGRO_SYSTEM *sys = al_get_system_driver();
-   ALLEGRO_CONFIG *sys_cfg = al_get_system_config();
    ALLEGRO_SYSTEM_WIN *syswin = (ALLEGRO_SYSTEM_WIN *)sys;
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
+   ALLEGRO_CONFIG *sys_cfg = al_get_system_config();
    const char *s;
+#endif
 
    /* Look up the toggle_mouse_grab_key binding.  This isn't such a great place
     * to do it, but the config file is not available in win_initialize,
     * and this is neutral between the D3D and OpenGL display drivers.
     */
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
    if (!syswin->toggle_mouse_grab_keycode) {
       const char *binding = al_get_config_value(sys_cfg, "keyboard",
          "toggle_mouse_grab_key");
@@ -274,6 +277,7 @@ static ALLEGRO_DISPLAY_INTERFACE *win_get_display_driver(void)
          }
       }
    }
+#endif
 
    /* Programmatic selection. */
 #ifdef ALLEGRO_CFG_D3D
@@ -292,6 +296,7 @@ static ALLEGRO_DISPLAY_INTERFACE *win_get_display_driver(void)
    }
 #endif
 
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
    /* Selection by configuration file.  The configuration value is non-binding.
     * The user may unknowingly set a value which was configured out at compile
     * time.  The value should have no effect instead of causing a failure.
@@ -320,6 +325,7 @@ static ALLEGRO_DISPLAY_INTERFACE *win_get_display_driver(void)
          ALLEGRO_WARN("Graphics driver selection unrecognised: %s\n", s);
       }
    }
+#endif
 
    /* Automatic graphics driver selection. */
    /* XXX is implicitly setting new_display_flags the desired behaviour? */
@@ -357,6 +363,10 @@ static ALLEGRO_KEYBOARD_DRIVER *win_get_keyboard_driver(void)
  */
 static bool win_configured_joystick_driver_is(const char * name)
 {
+#ifdef ALLEGRO_CFG_NO_SYSTEM_CONFIG
+   (void)name;
+   return false;
+#else
    const char * driver;
    ALLEGRO_CONFIG * sysconf = al_get_system_config();
    if (!sysconf) return false;
@@ -364,6 +374,7 @@ static bool win_configured_joystick_driver_is(const char * name)
    if (!driver) return false;
    ALLEGRO_DEBUG("Configuration value joystick.driver = %s\n", driver);
    return (0 == _al_stricmp(driver, name));
+#endif
 }
 
 

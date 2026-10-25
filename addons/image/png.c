@@ -21,10 +21,12 @@ ALLEGRO_DEBUG_CHANNEL("image")
 static double get_gamma(void)
 {
    double gamma = -1.0;
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
    const char* config = al_get_config_value(al_get_system_config(), "image", "png_screen_gamma");
    if (config) {
       gamma = strtod(config, NULL);
    }
+#endif
    if (gamma == -1.0) {
       /* Use the environment variable if available.
        * 2.2 is a good guess for PC monitors.
@@ -545,9 +547,13 @@ bool _al_save_png_f(ALLEGRO_FILE *fp, ALLEGRO_BITMAP *bmp)
    colour_type = PNG_COLOR_TYPE_RGB_ALPHA;
 
    /* Set compression level. */
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
    int z_level = translate_compression_level(
       al_get_config_value(al_get_system_config(), "image", "png_compression_level")
    );
+#else
+   int z_level = translate_compression_level(NULL);
+#endif
    png_set_compression_level(png_ptr, z_level);
 
    png_set_IHDR(png_ptr, info_ptr,

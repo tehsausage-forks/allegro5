@@ -89,8 +89,11 @@ static void delete_string_list(_AL_VECTOR *v)
 
 void _al_configure_logging(void)
 {
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
    ALLEGRO_CONFIG *config;
+#endif
    char const *v;
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
    bool got_all = false;
 
    config = al_get_system_config();
@@ -131,6 +134,7 @@ void _al_configure_logging(void)
       if (got_all)
          delete_string_list(&trace_info.channels);
    }
+#endif
 
 #ifdef DEBUGMODE
    trace_info.level = 0;
@@ -139,8 +143,10 @@ void _al_configure_logging(void)
 #endif
 
    v = getenv("ALLEGRO_TRACE_LEVEL");
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
    if (!v)
       v = al_get_config_value(config, "trace", "level");
+#endif
    if (v) {
       if (!strcmp(v, "error")) trace_info.level = 3;
       else if (!strcmp(v, "warn")) trace_info.level = 2;
@@ -149,6 +155,7 @@ void _al_configure_logging(void)
       else if (!strcmp(v, "none")) trace_info.level = 9999;
    }
 
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
    v = al_get_config_value(config, "trace", "timestamps");
    if (!v || strcmp(v, "0"))
       trace_info.flags |= 4;
@@ -172,6 +179,7 @@ void _al_configure_logging(void)
       trace_info.win_use_output_debug_string = false;
    else
       trace_info.win_use_output_debug_string = true;
+#endif
 
    if (!trace_info.configured)
       _al_mutex_init(&trace_info.trace_mutex);

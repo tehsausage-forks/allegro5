@@ -21,10 +21,12 @@ uint32_t al_get_allegro_acodec_version(void)
 bool al_init_acodec_addon(void)
 {
    bool acodec_prefer_dumb = false;
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
    const char* acodec_prefer_dumb_value =
       al_get_config_value(al_get_system_config(), "compatibility", "acodec_prefer_dumb");
    if (acodec_prefer_dumb_value && strcmp(acodec_prefer_dumb_value, "true") == 0)
       acodec_prefer_dumb = true;
+#endif
 
    bool ret = true;
 

@@ -231,6 +231,8 @@ static bool have_joystick_axis(int fd)
 
 
 
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
+
 static bool ljoy_detect_device_name(int num, ALLEGRO_USTR *device_name)
 {
    char key[80];
@@ -247,6 +249,7 @@ static bool ljoy_detect_device_name(int num, ALLEGRO_USTR *device_name)
    return (stat(al_cstr(device_name), &stbuf) == 0);
 }
 
+#endif
 
 
 static ALLEGRO_JOYSTICK_LINUX *ljoy_by_device_name(
@@ -624,7 +627,9 @@ static void ljoy_device(ALLEGRO_USTR *device_name) {
 
 static void ljoy_scan(bool configure)
 {
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
    int num;
+#endif
    ALLEGRO_USTR *device_name;
    const ALLEGRO_FS_INTERFACE *fs_interface;
    unsigned i;
@@ -641,12 +646,14 @@ static void ljoy_scan(bool configure)
 
    device_name = al_ustr_new("");
 
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
    /* First try to read devices from allegro.cfg. */
    for (num = 0; num < 32; num++) {
       if (!ljoy_detect_device_name(num, device_name))
          continue;
       ljoy_device(device_name);
    }
+#endif
 
    ALLEGRO_FS_ENTRY *dir = al_create_fs_entry("/dev/input");
    if (al_open_directory(dir)) {

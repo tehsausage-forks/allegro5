@@ -346,8 +346,12 @@ static void save_jpg_entry_helper(ALLEGRO_FILE *fp, ALLEGRO_BITMAP *bmp,
    cinfo.in_color_space = JCS_RGB;
    jpeg_set_defaults(&cinfo);
 
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
    const char* level = al_get_config_value(al_get_system_config(), "image", "jpeg_quality_level");
    jpeg_set_quality(&cinfo, level ? strtol(level, NULL, 10) : 75, true);
+#else
+   jpeg_set_quality(&cinfo, 75, true);
+#endif
 
    jpeg_start_compress(&cinfo, 1);
 

@@ -904,6 +904,7 @@ ALLEGRO_FONT *al_load_ttf_font_stretch_f(ALLEGRO_FILE *file,
     ALLEGRO_PATH *path;
     FT_Open_Args args;
     int result;
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
     ALLEGRO_CONFIG* system_cfg = al_get_system_config();
     const char* min_page_size_str =
       al_get_config_value(system_cfg, "ttf", "min_page_size");
@@ -913,6 +914,7 @@ ALLEGRO_FONT *al_load_ttf_font_stretch_f(ALLEGRO_FILE *file,
       al_get_config_value(system_cfg, "ttf", "cache_text");
     const char* skip_cache_misses_str =
       al_get_config_value(system_cfg, "ttf", "skip_cache_misses");
+#endif
 
     if ((h > 0 && w < 0) || (h < 0 && w > 0)) {
        ALLEGRO_ERROR("Height/width have opposite signs (w = %d, h = %d).\n", w, h);
@@ -931,6 +933,7 @@ ALLEGRO_FONT *al_load_ttf_font_stretch_f(ALLEGRO_FILE *file,
     data->min_page_size = 256;
     data->max_page_size = 8192;
 
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
     if (min_page_size_str) {
       int min_page_size = atoi(min_page_size_str);
       if (min_page_size > 0) {
@@ -948,6 +951,7 @@ ALLEGRO_FONT *al_load_ttf_font_stretch_f(ALLEGRO_FILE *file,
     if (skip_cache_misses_str && !strcmp(skip_cache_misses_str, "true")) {
        data->skip_cache_misses = true;
     }
+#endif
 
     memset(&args, 0, sizeof args);
     args.flags = FT_OPEN_STREAM;
@@ -1020,9 +1024,11 @@ ALLEGRO_FONT *al_load_ttf_font_stretch_f(ALLEGRO_FILE *file,
     if (data->skip_cache_misses) {
        cache_glyphs(data, "\0", 1);
     }
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
     if (cache_str) {
        cache_glyphs(data, cache_str, strlen(cache_str));
     }
+#endif
     unlock_current_page(data);
 
     f = al_calloc(sizeof *f, 1);

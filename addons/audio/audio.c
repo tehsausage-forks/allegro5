@@ -168,6 +168,9 @@ void al_fill_silence(void *buf, unsigned int samples,
 
 static ALLEGRO_AUDIO_DRIVER_ENUM get_config_audio_driver(void)
 {
+#ifdef ALLEGRO_CFG_NO_SYSTEM_CONFIG
+   return ALLEGRO_AUDIO_DRIVER_AUTODETECT;
+#else
    ALLEGRO_CONFIG *config = al_get_system_config();
    const char *value;
 
@@ -194,6 +197,7 @@ static ALLEGRO_AUDIO_DRIVER_ENUM get_config_audio_driver(void)
       return ALLEGRO_AUDIO_DRIVER_DSOUND;
 
    return ALLEGRO_AUDIO_DRIVER_AUTODETECT;
+#endif
 }
 
 /* Function: al_get_num_audio_output_devices

@@ -210,6 +210,7 @@ void _al_raspberrypi_get_screen_info(int *dx, int *dy,
             p2 += strlen("fbheight=");
             int w = atoi(p);
             int h = atoi(p2);
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
             const ALLEGRO_FILE_INTERFACE *file_interface = al_get_new_file_interface();
             al_set_standard_file_interface();
             ALLEGRO_CONFIG *cfg = al_load_config_file("/boot/config.txt");
@@ -252,6 +253,12 @@ void _al_raspberrypi_get_screen_info(int *dx, int *dy,
                printf("Couldn't open /boot/config.txt\n");
             }
             al_set_new_file_interface(file_interface);
+#else
+            *dx = (*screen_width - w) / 2;
+            *dy = (*screen_height - h) / 2;
+            *screen_width = w;
+            *screen_height = h;
+#endif
          }
       }
       fclose(cmdline);

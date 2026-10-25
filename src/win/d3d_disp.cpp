@@ -116,9 +116,13 @@ static bool know_card_type = false;
 static bool check_use_fixed_pipeline(LPDIRECT3DDEVICE9 device)
 {
    if (!know_card_type) {
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
       ALLEGRO_CONFIG* sys_cfg = al_get_system_config();
       const char* detection_setting = al_get_config_value(sys_cfg, "graphics", "prim_d3d_legacy_detection");
       detection_setting = detection_setting ? detection_setting : "default";
+#else
+      const char* detection_setting = "default";
+#endif
       if (strcmp(detection_setting, "default") == 0) {
          D3DCAPS9 caps;
          device->GetDeviceCaps(&caps);

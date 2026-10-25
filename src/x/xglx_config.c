@@ -444,6 +444,7 @@ void _al_xglx_config_select_visual(ALLEGRO_DISPLAY_XGLX *glx)
    bool force_old = false;
    bool using_fbc;
 
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
    const char *selection_mode;
    selection_mode = al_get_config_value(al_get_system_config(), "graphics",
                        "config_selection");
@@ -455,6 +456,7 @@ void _al_xglx_config_select_visual(ALLEGRO_DISPLAY_XGLX *glx)
       else if (!_al_stricmp(selection_mode, "new"))
          force_old = false;
    }
+#endif
 
    if (glx->glx_version >= 130 && !force_old)
       eds = get_visuals_new(glx, &eds_count);

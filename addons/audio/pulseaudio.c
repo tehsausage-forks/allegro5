@@ -61,6 +61,10 @@ static _AL_LIST* output_device_list;
 
 static unsigned int get_buffer_size(const ALLEGRO_CONFIG *config)
 {
+#ifdef ALLEGRO_CFG_NO_SYSTEM_CONFIG
+   (void)config;
+   return DEFAULT_BUFFER_SIZE;
+#else
    if (config) {
       const char *val = al_get_config_value(config,
          "pulseaudio", "buffer_size");
@@ -73,6 +77,7 @@ static unsigned int get_buffer_size(const ALLEGRO_CONFIG *config)
    }
 
    return DEFAULT_BUFFER_SIZE;
+#endif
 }
 
 static void _output_device_list_dtor(void* value, void* userdata)
@@ -308,7 +313,11 @@ static int pulseaudio_allocate_voice(ALLEGRO_VOICE *voice)
 
    voice->extra = pv;
 
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
    pv->buffer_size_in_frames = get_buffer_size(al_get_system_config());
+#else
+   pv->buffer_size_in_frames = get_buffer_size(NULL);
+#endif
    pv->frame_size_in_bytes = ss.channels * al_get_audio_depth_size(voice->depth);
 
    pv->status = PV_IDLE;

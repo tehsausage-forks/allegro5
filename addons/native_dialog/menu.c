@@ -826,10 +826,12 @@ bool al_set_display_menu(ALLEGRO_DISPLAY *display, ALLEGRO_MENU *menu)
    size_t i;
    int menu_height = _al_get_menu_display_height();
    bool automatic_menu_display_resize = true;
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
    const char* automatic_menu_display_resize_value =
       al_get_config_value(al_get_system_config(), "compatibility", "automatic_menu_display_resize");
    if (automatic_menu_display_resize_value && strcmp(automatic_menu_display_resize_value, "false") == 0)
       automatic_menu_display_resize = false;
+#endif
 
    ASSERT(display);
 

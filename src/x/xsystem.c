@@ -114,6 +114,7 @@ static ALLEGRO_SYSTEM *xglx_initialize(int flags)
       ALLEGRO_INFO("events thread spawned.\n");
    }
 
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
    const char *binding = al_get_config_value(al_get_system_config(),
          "keyboard", "toggle_mouse_grab_key");
    if (binding) {
@@ -126,6 +127,7 @@ static ALLEGRO_SYSTEM *xglx_initialize(int flags)
          ALLEGRO_WARN("Cannot parse key binding '%s'\n", binding);
       }
    }
+#endif
 
    return &s->system;
 }

@@ -40,7 +40,9 @@
 ALLEGRO_DEBUG_CHANNEL("system")
 
 static ALLEGRO_SYSTEM *active_sysdrv = NULL;
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
 static ALLEGRO_CONFIG *sys_config = NULL;
+#endif
 
 _AL_VECTOR _al_system_interfaces;
 static _AL_VECTOR _user_system_interfaces = _AL_VECTOR_INITIALIZER(ALLEGRO_SYSTEM_INTERFACE *);
@@ -87,11 +89,15 @@ static void shutdown_system_driver(void)
       _al_vector_free(&_al_system_interfaces);
       _al_vector_init(&_al_system_interfaces, sizeof(ALLEGRO_SYSTEM_INTERFACE *));
    }
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
    al_destroy_config(sys_config);
    sys_config = NULL;
+#endif
 }
 
 
+
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
 
 /* al_get_standard_path() does not work before the system driver is
  * initialised.  Before that, we need to call the underlying functions
@@ -170,6 +176,7 @@ static void read_allegro_cfg(void)
    _al_configure_logging();
 }
 
+#endif
 
 
 /*
@@ -239,7 +246,9 @@ bool al_install_system(int version, int (*atexit_ptr)(void (*)(void)))
    /* Set up a bootstrap system so the calls expecting it don't freak out */
    memset(&bootstrap, 0, sizeof(bootstrap));
    active_sysdrv = &bootstrap;
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
    read_allegro_cfg();
+#endif
 
 #ifdef ALLEGRO_BCC32
    /* This supresses exceptions on floating point divide by zero */
@@ -265,9 +274,13 @@ bool al_install_system(int version, int (*atexit_ptr)(void (*)(void)))
    active_sysdrv = real_system;
    active_sysdrv->mouse_wheel_precision = 1;
 
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
    const char *min_bitmap_size = al_get_config_value(
       al_get_system_config(), "graphics", "min_bitmap_size");
    active_sysdrv->min_bitmap_size = min_bitmap_size ? atoi(min_bitmap_size) : 16;
+#else
+   active_sysdrv->min_bitmap_size = 16;
+#endif
 
    ALLEGRO_INFO("Allegro version: %s\n", ALLEGRO_VERSION_STR);
 
@@ -370,9 +383,13 @@ ALLEGRO_SYSTEM_ID al_get_system_id(void)
  */
 ALLEGRO_CONFIG *al_get_system_config(void)
 {
+#ifdef ALLEGRO_CFG_NO_SYSTEM_CONFIG
+   return NULL;
+#else
    if (!sys_config)
       sys_config = al_create_config();
    return sys_config;
+#endif
 }
 
 
@@ -535,6 +552,10 @@ void al_init_timeout(ALLEGRO_TIMEOUT *timeout, double seconds)
 
 static uint32_t get_joystick_compat_version(const char* key)
 {
+#ifdef ALLEGRO_CFG_NO_SYSTEM_CONFIG
+   (void)key;
+   return al_get_allegro_version();
+#else
    ALLEGRO_CONFIG *system_config = al_get_system_config();
    const char* compat_version = al_get_config_value(system_config, "compatibility", key);
    if (!compat_version || strlen(compat_version) == 0)
@@ -545,6 +566,7 @@ static uint32_t get_joystick_compat_version(const char* key)
    /* Ignore the release number, we don't expect that to make a difference */
    sscanf(compat_version, "%2d.%2d.%2d", &version, &sub_version, &wip_version);
    return AL_ID(version, sub_version, wip_version, 0);
+#endif
 }
 
 

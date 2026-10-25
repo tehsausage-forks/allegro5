@@ -1228,6 +1228,9 @@ static void init_new_vsync(ALLEGRO_DISPLAY_OSX_WIN *dpy)
 
 static void init_halt_events(ALLEGRO_DISPLAY_OSX_WIN *dpy)
 {
+#ifdef ALLEGRO_CFG_NO_SYSTEM_CONFIG
+   dpy->send_halt_events = false;
+#else
    const char* value = al_get_config_value(al_get_system_config(), "osx", "allow_live_resize");
    if (value && strcmp(value, "false") == 0) {
       dpy->send_halt_events = true;
@@ -1235,6 +1238,7 @@ static void init_halt_events(ALLEGRO_DISPLAY_OSX_WIN *dpy)
    else {
       dpy->send_halt_events = false;
    }
+#endif
    dpy->halt_mutex = al_create_mutex();
    dpy->halt_cond = al_create_cond();
 }

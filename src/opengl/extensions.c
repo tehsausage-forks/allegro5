@@ -127,6 +127,7 @@ static uint32_t parse_opengl_version(const char *s)
 /* Reads version info out of glGetString(GL_VERSION) */
 static uint32_t _al_ogl_version(void)
 {
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
    char const *value = al_get_config_value(al_get_system_config(), "opengl",
       "force_opengl_version");
    if (value) {
@@ -138,6 +139,7 @@ static uint32_t _al_ogl_version(void)
          (v & 0xff));
       return v;
    }
+#endif
 
    const char *str;
 
@@ -519,6 +521,7 @@ static bool _ogl_is_extension_supported(const char *extension,
 static bool _ogl_is_extension_with_version_supported(
    const char *extension, ALLEGRO_DISPLAY *disp, uint32_t ver)
 {
+#ifndef ALLEGRO_CFG_NO_SYSTEM_CONFIG
    char const *value;
 
   /* For testing purposes, any OpenGL extension can be disable in
@@ -536,6 +539,7 @@ static bool _ogl_is_extension_with_version_supported(
          extension);
       return false;
    }
+#endif
 
    /* If the extension is included in the OpenGL version, there is no
     * need to check the extensions list.
