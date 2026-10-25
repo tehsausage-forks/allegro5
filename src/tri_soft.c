@@ -28,6 +28,8 @@
 
 ALLEGRO_DEBUG_CHANNEL("tri_soft")
 
+#ifndef ALLEGRO_CFG_NO_SOFTWARE_TRIS
+
 #define MIN _ALLEGRO_MIN
 #define MAX _ALLEGRO_MAX
 
@@ -864,5 +866,35 @@ void _al_draw_soft_triangle(
    if (need_unlock)
       al_unlock_bitmap(target);
 }
+
+#else
+
+void _al_triangle_2d(ALLEGRO_BITMAP* texture, ALLEGRO_VERTEX* v1,
+   ALLEGRO_VERTEX* v2, ALLEGRO_VERTEX* v3)
+{
+   (void)texture;
+   (void)v1;
+   (void)v2;
+   (void)v3;
+}
+
+void _al_draw_soft_triangle(ALLEGRO_VERTEX* v1, ALLEGRO_VERTEX* v2,
+   ALLEGRO_VERTEX* v3, uintptr_t state,
+   void (*init)(uintptr_t, ALLEGRO_VERTEX*, ALLEGRO_VERTEX*, ALLEGRO_VERTEX*),
+   void (*first)(uintptr_t, int, int, int, int),
+   void (*step)(uintptr_t, int),
+   void (*draw)(uintptr_t, int, int, int))
+{
+   (void)v1;
+   (void)v2;
+   (void)v3;
+   (void)state;
+   (void)init;
+   (void)first;
+   (void)step;
+   (void)draw;
+}
+
+#endif
 
 /* vim: set sts=3 sw=3 et: */
