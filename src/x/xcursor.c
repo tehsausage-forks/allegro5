@@ -16,13 +16,9 @@
 
 #ifdef ALLEGRO_XWINDOWS_WITH_XCURSOR
 #include <X11/Xcursor/Xcursor.h>
-#else
-/* This requirement could be lifted for compatibility with older systems at the
- * expense of functionality, but it's probably not worthwhile.
- */
-#error This file requires Xcursor.
 #endif
 
+#ifdef ALLEGRO_XWINDOWS_WITH_XCURSOR
 ALLEGRO_MOUSE_CURSOR *_al_xwin_create_mouse_cursor(ALLEGRO_BITMAP *bmp,
    int x_focus, int y_focus)
 {
@@ -82,6 +78,16 @@ ALLEGRO_MOUSE_CURSOR *_al_xwin_create_mouse_cursor(ALLEGRO_BITMAP *bmp,
 
    return (ALLEGRO_MOUSE_CURSOR *)xcursor;
 }
+#else
+ALLEGRO_MOUSE_CURSOR *_al_xwin_create_mouse_cursor(ALLEGRO_BITMAP *bmp,
+   int x_focus, int y_focus)
+{
+   (void)bmp;
+   (void)x_focus;
+   (void)y_focus;
+   return NULL;
+}
+#endif
 
 
 
