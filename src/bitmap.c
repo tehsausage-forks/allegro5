@@ -21,6 +21,11 @@
 
 #include <stdio.h>
 #include <string.h>
+
+#if (defined(__x86_64__) || defined(__i386__)) && (defined(__GNUC__) || defined(__clang__))
+#include <tmmintrin.h>
+#define ALLEGRO_HAVE_SSSE3_BYTESWAP
+#endif
 #include "allegro5/allegro.h"
 #include "allegro5/internal/aintern.h"
 #include "allegro5/internal/aintern_bitmap.h"
@@ -772,26 +777,430 @@ void _al_copy_bitmap_data(
    }
 }
 
+#define CONV_R 0
+#define CONV_G 1
+#define CONV_B 2
+#define CONV_A 3
+#define CONV_X 4
+#define CONV_FILL 0x80
+
+static int format_32bpp_layout(int format, unsigned char layout[4])
+{
+#ifdef ALLEGRO_BIG_ENDIAN
+   static const unsigned char argb[4] = {3, 0, 1, 2};
+   static const unsigned char xrgb[4] = {4, 0, 1, 2};
+   static const unsigned char abgr[4] = {3, 2, 1, 0};
+   static const unsigned char xbgr[4] = {4, 2, 1, 0};
+   static const unsigned char rgba[4] = {0, 1, 2, 3};
+   static const unsigned char rgbx[4] = {0, 1, 2, 4};
+#else
+   static const unsigned char argb[4] = {2, 1, 0, 3};
+   static const unsigned char xrgb[4] = {2, 1, 0, 4};
+   static const unsigned char abgr[4] = {0, 1, 2, 3};
+   static const unsigned char xbgr[4] = {0, 1, 2, 4};
+   static const unsigned char rgba[4] = {3, 2, 1, 0};
+   static const unsigned char rgbx[4] = {4, 2, 1, 0};
+#endif
+   static const unsigned char abgr_le[4] = {0, 1, 2, 3};
+   const unsigned char *src = NULL;
+
+   switch (format) {
+      case ALLEGRO_PIXEL_FORMAT_ARGB_8888: src = argb; break;
+      case ALLEGRO_PIXEL_FORMAT_XRGB_8888: src = xrgb; break;
+      case ALLEGRO_PIXEL_FORMAT_ABGR_8888: src = abgr; break;
+      case ALLEGRO_PIXEL_FORMAT_XBGR_8888: src = xbgr; break;
+      case ALLEGRO_PIXEL_FORMAT_RGBA_8888: src = rgba; break;
+      case ALLEGRO_PIXEL_FORMAT_RGBX_8888: src = rgbx; break;
+      case ALLEGRO_PIXEL_FORMAT_ABGR_8888_LE: src = abgr_le; break;
+   }
+
+   if (!src)
+      return 0;
+   memcpy(layout, src, 4);
+   return 1;
+}
+
+static int format_24bpp_layout(int format, unsigned char layout[3])
+{
+#ifdef ALLEGRO_BIG_ENDIAN
+   static const unsigned char rgb[3] = {0, 1, 2};
+   static const unsigned char bgr[3] = {2, 1, 0};
+#else
+   static const unsigned char rgb[3] = {2, 1, 0};
+   static const unsigned char bgr[3] = {0, 1, 2};
+#endif
+   const unsigned char *src = NULL;
+
+   switch (format) {
+      case ALLEGRO_PIXEL_FORMAT_RGB_888: src = rgb; break;
+      case ALLEGRO_PIXEL_FORMAT_BGR_888: src = bgr; break;
+   }
+
+   if (!src)
+      return 0;
+   memcpy(layout, src, 3);
+   return 1;
+}
+
+static int find_channel(const unsigned char *layout, int count, int channel)
+{
+   int i;
+
+   for (i = 0; i < count; i++) {
+      if (layout[i] == channel)
+         return i;
+   }
+   return -1;
+}
+
+static int build_32bpp_mask(const unsigned char src_layout[4],
+   const unsigned char dst_layout[4], unsigned char mask[16],
+   unsigned char fill[16], unsigned char pixmask[4])
+{
+   int i, p;
+
+   for (i = 0; i < 4; i++) {
+      int channel = dst_layout[i];
+      int source = -1;
+
+      if (channel == CONV_X) {
+         pixmask[i] = CONV_FILL;
+      }
+      else if (channel == CONV_A) {
+         source = find_channel(src_layout, 4, CONV_A);
+         pixmask[i] = (source < 0) ? CONV_FILL : source;
+      }
+      else {
+         source = find_channel(src_layout, 4, channel);
+         if (source < 0)
+            return 0;
+         pixmask[i] = source;
+      }
+   }
+
+   for (p = 0; p < 4; p++) {
+      for (i = 0; i < 4; i++) {
+         int source = pixmask[i];
+         int index = p * 4 + i;
+         mask[index] = (source == CONV_FILL) ? CONV_FILL : p * 4 + source;
+         fill[index] = (source == CONV_FILL) ? 0xFF : 0;
+      }
+   }
+
+   return 1;
+}
+
+static int build_24bpp_mask(const unsigned char src_layout[3],
+   const unsigned char dst_layout[4], unsigned char mask[16],
+   unsigned char fill[16], unsigned char pixmask[4])
+{
+   int i, p;
+
+   for (i = 0; i < 4; i++) {
+      int channel = dst_layout[i];
+      int source = -1;
+
+      if (channel == CONV_A || channel == CONV_X) {
+         pixmask[i] = CONV_FILL;
+      }
+      else {
+         source = find_channel(src_layout, 3, channel);
+         if (source < 0)
+            return 0;
+         pixmask[i] = source;
+      }
+   }
+
+   for (p = 0; p < 4; p++) {
+      for (i = 0; i < 4; i++) {
+         int source = pixmask[i];
+         int index = p * 4 + i;
+         mask[index] = (source == CONV_FILL) ? CONV_FILL : p * 3 + source;
+         fill[index] = (source == CONV_FILL) ? 0xFF : 0;
+      }
+   }
+
+   return 1;
+}
+
+
+static int build_32_to_24_mask(const unsigned char src_layout[4],
+   const unsigned char dst_layout[3], unsigned char mask[16],
+   unsigned char pixmask[3])
+{
+   int i, p;
+
+   for (i = 0; i < 3; i++) {
+      int source = find_channel(src_layout, 4, dst_layout[i]);
+      if (source < 0)
+         return 0;
+      pixmask[i] = source;
+   }
+
+   for (p = 0; p < 4; p++) {
+      for (i = 0; i < 3; i++)
+         mask[p * 3 + i] = p * 4 + pixmask[i];
+   }
+   for (i = 12; i < 16; i++)
+      mask[i] = CONV_FILL;
+
+   return 1;
+}
+
+#ifdef ALLEGRO_HAVE_SSSE3_BYTESWAP
+__attribute__((target("ssse3")))
+#endif
+static void convert_32bpp_row(const unsigned char *src, unsigned char *dst,
+   int width, const unsigned char mask[16], const unsigned char fill[16],
+   const unsigned char pixmask[4])
+{
+   int x = 0;
+
+#ifdef ALLEGRO_HAVE_SSSE3_BYTESWAP
+   const __m128i maskv = _mm_loadu_si128((const __m128i *)mask);
+   const __m128i fillv = _mm_loadu_si128((const __m128i *)fill);
+
+   for (; x + 4 <= width; x += 4) {
+      __m128i pixels = _mm_loadu_si128((const __m128i *)(src + x * 4));
+      pixels = _mm_shuffle_epi8(pixels, maskv);
+      pixels = _mm_or_si128(pixels, fillv);
+      _mm_storeu_si128((__m128i *)(dst + x * 4), pixels);
+   }
+#endif
+
+   for (; x < width; x++) {
+      unsigned char in[4], out[4];
+      int i;
+
+      memcpy(in, src + x * 4, 4);
+      for (i = 0; i < 4; i++) {
+         if (pixmask[i] == CONV_FILL)
+            out[i] = 0xFF;
+         else
+            out[i] = in[pixmask[i]];
+      }
+      memcpy(dst + x * 4, out, 4);
+   }
+
+   (void)fill;
+}
+
+#ifdef ALLEGRO_HAVE_SSSE3_BYTESWAP
+__attribute__((target("ssse3")))
+#endif
+static void convert_24bpp_row(const unsigned char *src, unsigned char *dst,
+   int width, const unsigned char mask[16], const unsigned char fill[16],
+   const unsigned char pixmask[4])
+{
+   int x = 0;
+
+#ifdef ALLEGRO_HAVE_SSSE3_BYTESWAP
+   const __m128i maskv = _mm_loadu_si128((const __m128i *)mask);
+   const __m128i fillv = _mm_loadu_si128((const __m128i *)fill);
+
+   for (; x + 6 <= width; x += 4) {
+      __m128i pixels = _mm_loadu_si128((const __m128i *)(src + x * 3));
+      pixels = _mm_shuffle_epi8(pixels, maskv);
+      pixels = _mm_or_si128(pixels, fillv);
+      _mm_storeu_si128((__m128i *)(dst + x * 4), pixels);
+   }
+#endif
+
+   for (; x < width; x++) {
+      const unsigned char *in = src + x * 3;
+      unsigned char out[4];
+      int i;
+
+      for (i = 0; i < 4; i++) {
+         if (pixmask[i] == CONV_FILL)
+            out[i] = 0xFF;
+         else
+            out[i] = in[pixmask[i]];
+      }
+      memcpy(dst + x * 4, out, 4);
+   }
+
+   (void)fill;
+}
+
+#ifdef ALLEGRO_HAVE_SSSE3_BYTESWAP
+__attribute__((target("ssse3")))
+#endif
+static void convert_32bpp_to_24bpp_row(const unsigned char *src,
+   unsigned char *dst, int width, const unsigned char mask[16],
+   const unsigned char pixmask[3])
+{
+   int x = 0;
+
+#ifdef ALLEGRO_HAVE_SSSE3_BYTESWAP
+   const __m128i maskv = _mm_loadu_si128((const __m128i *)mask);
+
+   for (; x + 4 <= width; x += 4) {
+      __m128i pixels = _mm_loadu_si128((const __m128i *)(src + x * 4));
+      uint32_t tail;
+      pixels = _mm_shuffle_epi8(pixels, maskv);
+      _mm_storel_epi64((__m128i *)(dst + x * 3), pixels);
+      tail = (uint32_t)_mm_cvtsi128_si32(_mm_srli_si128(pixels, 8));
+      memcpy(dst + x * 3 + 8, &tail, 4);
+   }
+#endif
+
+   for (; x < width; x++) {
+      int i;
+      for (i = 0; i < 3; i++)
+         dst[x * 3 + i] = src[x * 4 + pixmask[i]];
+   }
+}
+
+static void convert_32bpp_to_24bpp(
+   const void *src, int src_pitch,
+   void *dst, int dst_pitch,
+   int sx, int sy, int dx, int dy, int width, int height,
+   int src_format, int dst_format)
+{
+   unsigned char src_layout[4], dst_layout[3];
+   unsigned char mask[16];
+   unsigned char pixmask[3];
+   int y;
+
+   if (!format_32bpp_layout(src_format, src_layout) ||
+       !format_24bpp_layout(dst_format, dst_layout) ||
+       !build_32_to_24_mask(src_layout, dst_layout, mask, pixmask))
+      return;
+
+   for (y = 0; y < height; y++) {
+      const unsigned char *src_row = (const unsigned char *)src
+         + (sy + y) * src_pitch + sx * 4;
+      unsigned char *dst_row = (unsigned char *)dst
+         + (dy + y) * dst_pitch + dx * 3;
+      convert_32bpp_to_24bpp_row(src_row, dst_row, width, mask, pixmask);
+   }
+}
+
+static void convert_32bpp(
+   const void *src, int src_pitch,
+   void *dst, int dst_pitch,
+   int sx, int sy, int dx, int dy, int width, int height,
+   int src_format, int dst_format)
+{
+   unsigned char src_layout[4], dst_layout[4];
+   unsigned char mask[16], fill[16];
+   unsigned char pixmask[4];
+   int y;
+
+   if (!format_32bpp_layout(src_format, src_layout) ||
+       !format_32bpp_layout(dst_format, dst_layout) ||
+       !build_32bpp_mask(src_layout, dst_layout,
+          mask, fill, pixmask)) {
+      fprintf(stderr, "allegro: attempted conversion %s -> %s (%dx%d)\n",
+         _al_pixel_format_name((ALLEGRO_PIXEL_FORMAT)src_format),
+         _al_pixel_format_name((ALLEGRO_PIXEL_FORMAT)dst_format),
+         width, height);
+      return;
+   }
+
+   for (y = 0; y < height; y++) {
+      const unsigned char *src_row = (const unsigned char *)src
+         + (sy + y) * src_pitch + sx * 4;
+      unsigned char *dst_row = (unsigned char *)dst
+         + (dy + y) * dst_pitch + dx * 4;
+      convert_32bpp_row(src_row, dst_row, width,
+         mask, fill, pixmask);
+   }
+}
+
+static void convert_24bpp_to_32bpp(
+   const void *src, int src_pitch,
+   void *dst, int dst_pitch,
+   int sx, int sy, int dx, int dy, int width, int height,
+   int src_format, int dst_format)
+{
+   unsigned char src_layout[3], mi_layout[4], dst_layout[4];
+   unsigned char mask24[16], fill24[16];
+   unsigned char pixmask24[4];
+   unsigned char mask32[16], fill32[16];
+   unsigned char pixmask32[4];
+   int mi_format;
+   unsigned char *tmp;
+   int y;
+
+   if (!format_24bpp_layout(src_format, src_layout) ||
+       !format_32bpp_layout(dst_format, dst_layout))
+      return;
+
+   mi_format = (src_format == ALLEGRO_PIXEL_FORMAT_RGB_888) ?
+      ALLEGRO_PIXEL_FORMAT_ARGB_8888 : ALLEGRO_PIXEL_FORMAT_ABGR_8888;
+
+   if (!format_32bpp_layout(mi_format, mi_layout) ||
+       !build_24bpp_mask(src_layout, mi_layout,
+          mask24, fill24, pixmask24) ||
+       !build_32bpp_mask(mi_layout, dst_layout,
+          mask32, fill32, pixmask32)) {
+      fprintf(stderr, "allegro: attempted conversion %s -> %s (%dx%d)\n",
+         _al_pixel_format_name((ALLEGRO_PIXEL_FORMAT)src_format),
+         _al_pixel_format_name((ALLEGRO_PIXEL_FORMAT)dst_format),
+         width, height);
+      return;
+   }
+
+   tmp = al_malloc((size_t)width * 4);
+   if (!tmp)
+      return;
+
+   for (y = 0; y < height; y++) {
+      const unsigned char *src_row = (const unsigned char *)src
+         + (sy + y) * src_pitch + sx * 3;
+      unsigned char *dst_row = (unsigned char *)dst
+         + (dy + y) * dst_pitch + dx * 4;
+
+      convert_24bpp_row(src_row, tmp, width,
+         mask24, fill24, pixmask24);
+      convert_32bpp_row(tmp, dst_row, width,
+         mask32, fill32, pixmask32);
+   }
+
+   al_free(tmp);
+}
+
 void _al_convert_bitmap_data(
    const void *src, int src_format, int src_pitch,
    void *dst, int dst_format, int dst_pitch,
    int sx, int sy, int dx, int dy, int width, int height)
 {
-   (void)src;
-   (void)src_pitch;
-   (void)dst;
-   (void)dst_pitch;
-   (void)sx;
-   (void)sy;
-   (void)dx;
-   (void)dy;
+   if (width <= 0 || height <= 0)
+      return;
 
-   fprintf(stderr, "allegro: attempted conversion %s -> %s (%dx%d)\n",
-      _al_pixel_format_name((ALLEGRO_PIXEL_FORMAT)src_format),
-      _al_pixel_format_name((ALLEGRO_PIXEL_FORMAT)dst_format),
-      width, height);
+   if (src_format == dst_format) {
+      _al_copy_bitmap_data(src, src_pitch, dst, dst_pitch,
+         sx, sy, dx, dy, width, height, src_format);
+      return;
+   }
+
+   {
+      unsigned char layout24[3];
+      if (format_24bpp_layout(dst_format, layout24)) {
+         unsigned char layout32[4];
+         if (format_32bpp_layout(src_format, layout32)) {
+            convert_32bpp_to_24bpp(src, src_pitch, dst, dst_pitch,
+               sx, sy, dx, dy, width, height, src_format, dst_format);
+            return;
+         }
+      }
+   }
+
+   if (src_format == ALLEGRO_PIXEL_FORMAT_RGB_888 ||
+       src_format == ALLEGRO_PIXEL_FORMAT_BGR_888) {
+      unsigned char layout[4];
+      if (format_32bpp_layout(dst_format, layout)) {
+         convert_24bpp_to_32bpp(src, src_pitch, dst, dst_pitch,
+            sx, sy, dx, dy, width, height, src_format, dst_format);
+         return;
+      }
+   }
+
+   convert_32bpp(src, src_pitch, dst, dst_pitch,
+      sx, sy, dx, dy, width, height, src_format, dst_format);
 }
-
 
 /* Function: al_clone_bitmap
  */
